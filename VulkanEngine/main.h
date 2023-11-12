@@ -19,16 +19,17 @@ typedef uint8_t bool;
 
 typedef struct
 {
-	int value;
+	uint32_t value;
 	bool hasValue;
 } optional;
 
 void CreateVulkanInstance(VkInstance* pVulkanInstance);
-void CreateLogicalDevice(VkPhysicalDevice* pVkPhysicalDevice, VkPhysicalDeviceFeatures* pVkPhysicalDeviceFeatures, optional* pVkQueueFamilyIndex, VkDevice* pVkDevice);
+void CreateLogicalDevice(VkPhysicalDevice* pVkPhysicalDevice, VkPhysicalDeviceFeatures* pVkPhysicalDeviceFeatures, uint32_t queueFamilyIndex, VkDevice* pVkDevice);
 
 void GetPhysicalDevice(VkInstance* pVulkanInstance, VkPhysicalDevice* pVkPhysicalDevice);
 VkPhysicalDeviceFeatures GetPhysicalDeviceFeatures(VkPhysicalDevice* pVkPhysicalDevice);
 optional GetPhysicalDeviceQueueFamily(VkPhysicalDevice* pVkPhysicalDevice);
+void GetDeviceQueue(VkDevice* pVkDevice, uint32_t queueFamilyIndex, uint32_t queueIndex, VkQueue* pVkQueue);
 
 void ShowPhysicalDeviceDetails(VkPhysicalDevice* pVkPhysicalDevice);
 

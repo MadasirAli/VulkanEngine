@@ -5,6 +5,7 @@ int main()
 	VkInstance vulkanInstance = NULL;
 	VkPhysicalDevice physicalDevice = NULL;
 	VkDevice logicalDevice = NULL;
+	VkQueue defaultQueue = NULL;
 
 	CreateVulkanInstance(&vulkanInstance);
 
@@ -16,7 +17,14 @@ int main()
 	physicalDeviceFeatures = GetPhysicalDeviceFeatures(&physicalDevice);
 	queueFamilyIndex = GetPhysicalDeviceQueueFamily(&physicalDevice);
 
-	CreateLogicalDevice(&physicalDevice, &physicalDeviceFeatures, &queueFamilyIndex, &logicalDevice);
+	if (queueFamilyIndex.hasValue == false)
+	{
+		error("GRAPHICS_BIT Queue Family not Found on Selected Device.");
+		return;
+	}
+
+	CreateLogicalDevice(&physicalDevice, &physicalDeviceFeatures, queueFamilyIndex.value, &logicalDevice);
+	GetDeviceQueue(&logicalDevice, queueFamilyIndex.value, 0, &defaultQueue);
 
 	DestroyVulkanDevice(&logicalDevice);
 	DestroyVulkanInstance(&vulkanInstance);
@@ -24,20 +32,17 @@ int main()
 	return 0;
 }
 
-void CreateLogicalDevice(VkPhysicalDevice* pVkPhysicalDevice, VkPhysicalDeviceFeatures* pVkPhysicalDeviceFeatures, optional* pVkQueueFamilyIndex, VkDevice* pVkDevice)
+void GetDeviceQueue(VkDevice* pVkDevice, uint32_t queueFamilyIndex, uint32_t queueIndex, VkQueue* pVkQueue)
+{
+	vkGetDeviceQueue(*pVkDevice, queueFamilyIndex, queueIndex, pVkQueue);
+}
+
+void CreateLogicalDevice(VkPhysicalDevice* pVkPhysicalDevice, VkPhysicalDeviceFeatures* pVkPhysicalDeviceFeatures, uint32_t queueFamilyIndex, VkDevice* pVkDevice)
 {
 	VkDeviceQueueCreateInfo vkDeviceQueueCreateInfo = { 0 };
 	vkDeviceQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 
-	optional queueFamilyIndex = *pVkQueueFamilyIndex;
-
-	if (queueFamilyIndex.hasValue == false)
-	{
-		error("GRAPHICS_BIT Queue Family not Found on Selected Device.");
-		return;
-	}
-
-	vkDeviceQueueCreateInfo.queueFamilyIndex = queueFamilyIndex.value;
+	vkDeviceQueueCreateInfo.queueFamilyIndex = queueFamilyIndex;
 	vkDeviceQueueCreateInfo.queueCount = 1;
 
 	const float QueuePriority = QUEUE_PRIORITY;
