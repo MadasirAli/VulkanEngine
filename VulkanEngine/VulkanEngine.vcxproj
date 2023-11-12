@@ -165,14 +165,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="definitions.h" />
+    <ClInclude Include="ctypes.h" />
     <ClInclude Include="logger.h" />
     <ClInclude Include="main.h" />
+    <ClInclude Include="optional.h" />
+    <ClInclude Include="stdbool.h" />
+    <ClInclude Include="stdint.h" />
+    <ClInclude Include="vulkan.h" />
     <ClInclude Include="window.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="logger.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="vulkan.c" />
     <ClCompile Include="window.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

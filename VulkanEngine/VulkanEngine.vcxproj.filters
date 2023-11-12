@@ -13,19 +13,46 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\utils">
+      <UniqueIdentifier>{111e2f82-efe6-482f-8672-2ca948b19597}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\comps">
+      <UniqueIdentifier>{45986a36-2359-4683-9dbc-1f79418c5db7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\utils">
+      <UniqueIdentifier>{918a7426-a85a-4d1d-8d16-2c64c94f7eb0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\comps">
+      <UniqueIdentifier>{17382e69-ac03-4b91-bef7-984168ccaa09}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ctypes">
+      <UniqueIdentifier>{6b947f27-a0a8-4123-bd6b-78aa791d844b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="logger.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="optional.h">
+      <Filter>Header Files\ctypes</Filter>
+    </ClInclude>
+    <ClInclude Include="stdint.h">
+      <Filter>Header Files\ctypes</Filter>
+    </ClInclude>
+    <ClInclude Include="stdbool.h">
+      <Filter>Header Files\ctypes</Filter>
+    </ClInclude>
+    <ClInclude Include="vulkan.h">
+      <Filter>Header Files\comps</Filter>
     </ClInclude>
     <ClInclude Include="window.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\comps</Filter>
     </ClInclude>
-    <ClInclude Include="definitions.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="ctypes.h">
+      <Filter>Header Files\ctypes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -33,10 +60,13 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="logger.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\utils</Filter>
     </ClCompile>
     <ClCompile Include="window.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\comps</Filter>
+    </ClCompile>
+    <ClCompile Include="vulkan.c">
+      <Filter>Source Files\comps</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

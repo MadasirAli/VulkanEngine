@@ -1,5 +1,13 @@
 #include "window.h"
 
+void DestroyWindowInstance(HWND hWnd)
+{
+	if (DestroyWindow(hWnd) == FALSE)
+	{
+		error("Failed to Destroy Window");
+	}
+}
+
 BOOL GetAndDispatchWindowMessage(HWND hWnd, MSG* msgContainer)
 {
 	if (PeekMessageW(msgContainer, hWnd, 0, 0, PM_REMOVE) == FALSE)

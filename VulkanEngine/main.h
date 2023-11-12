@@ -1,32 +1,10 @@
 #pragma once
-
-#include"logger.h"
-#include"definitions.h"
-#include"window.h"
-
-#include<vulkan\vulkan.h>
-
 #include<stdlib.h>
 
+#include"logger.h"
+#include"ctypes.h"
+#include"window.h"
 
-
-#define ENABLED_LAYERS_COUNT 1
-#define ENABLED_EXTENSIONS_COUNT 2
-#define ENABLED_LAYERS const char* pEnabledLayers[ENABLED_LAYERS_COUNT] = {"VK_LAYER_KHRONOS_validation"}
-#define ENABLED_EXTENSIONS const char* pEnabledExtensions[ENABLED_EXTENSIONS_COUNT] = {"VK_KHR_surface", "VK_KHR_win32_surface"}
-#define QUEUE_PRIORITY 1.0f
-
-void CreateVulkanInstance(VkInstance* pVulkanInstance);
-void CreateLogicalDevice(VkPhysicalDevice* pVkPhysicalDevice, VkPhysicalDeviceFeatures* pVkPhysicalDeviceFeatures, uint32_t queueFamilyIndex, VkDevice* pVkDevice);
-
-void GetPhysicalDevice(VkInstance* pVulkanInstance, VkPhysicalDevice* pVkPhysicalDevice);
-VkPhysicalDeviceFeatures GetPhysicalDeviceFeatures(VkPhysicalDevice* pVkPhysicalDevice);
-optional GetPhysicalDeviceQueueFamily(VkPhysicalDevice* pVkPhysicalDevice);
-void GetDeviceQueue(VkDevice* pVkDevice, uint32_t queueFamilyIndex, uint32_t queueIndex, VkQueue* pVkQueue);
-
-void ShowPhysicalDeviceDetails(VkPhysicalDevice* pVkPhysicalDevice);
-
-void DestroyVulkanInstance(VkInstance* pVulkanInstance);
-void DestroyVulkanDevice(VkDevice* pVkDevice);
+#include"vulkan.h"
 
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
