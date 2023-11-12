@@ -2,4 +2,8 @@
 
 #include<windows.h>
 
-void CreateWindowInstance();
+#include"logger.h"
+#include"definitions.h"
+
+BOOL GetAndDispatchWindowMessage(HWND hWnd, MSG* messageContainer);
+HWND CreateWindowInstance(wchar_t* windowName, WNDPROC wndProc);

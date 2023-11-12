@@ -2,10 +2,14 @@
 
 int main()
 {
+	int32_t exitCode = 0;
+
 	VkInstance vulkanInstance = NULL;
 	VkPhysicalDevice physicalDevice = NULL;
 	VkDevice logicalDevice = NULL;
 	VkQueue defaultQueue = NULL;
+
+	HWND hWnd = NULL;
 
 	CreateVulkanInstance(&vulkanInstance);
 
@@ -17,7 +21,7 @@ int main()
 	physicalDeviceFeatures = GetPhysicalDeviceFeatures(&physicalDevice);
 	queueFamilyIndex = GetPhysicalDeviceQueueFamily(&physicalDevice);
 
-	if (queueFamilyIndex.hasValue == false)
+	if (queueFamilyIndex.hasValue == FALSE)
 	{
 		error("GRAPHICS_BIT Queue Family not Found on Selected Device.");
 		return;
@@ -26,10 +30,29 @@ int main()
 	CreateLogicalDevice(&physicalDevice, &physicalDeviceFeatures, queueFamilyIndex.value, &logicalDevice);
 	GetDeviceQueue(&logicalDevice, queueFamilyIndex.value, 0, &defaultQueue);
 
+	hWnd = CreateWindowInstance(L"Test Window", WindowProc);
+
+	MSG	msg = {0};
+	while (GetAndDispatchWindowMessage(hWnd, &msg) == TRUE);
+
+	exitCode = msg.wParam;
+
 	DestroyVulkanDevice(&logicalDevice);
 	DestroyVulkanInstance(&vulkanInstance);
 
-	return 0;
+	return exitCode;
+}
+
+LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	switch (msg)
+	{
+	case WM_CLOSE:
+		PostQuitMessage(1);
+		break;
+	default:
+		return DefWindowProcW(hWnd, msg, wParam, lParam);
+	}
 }
 
 void GetDeviceQueue(VkDevice* pVkDevice, uint32_t queueFamilyIndex, uint32_t queueIndex, VkQueue* pVkQueue)
@@ -196,7 +219,7 @@ optional GetPhysicalDeviceQueueFamily(VkPhysicalDevice* pVkPhysicalDevice)
 		if (pQueueFamiliesList[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
 		{
 			result.value = i;
-			result.hasValue = true;
+			result.hasValue = TRUE;
 		}
 #pragma warning(pop)
 	}
