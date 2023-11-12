@@ -7,7 +7,8 @@ int main()
 	VkInstance vulkanInstance = NULL;
 	VkPhysicalDevice physicalDevice = NULL;
 	VkDevice logicalDevice = NULL;
-	VkQueue defaultQueue = NULL;
+	VkQueue graphicsQueue = NULL;
+	VkQueue presentationQueue = NULL;
 
 	HWND hWnd = NULL;
 
@@ -20,25 +21,40 @@ int main()
 
 	GetPhysicalDevice(&vulkanInstance, &physicalDevice);
 
-	VkPhysicalDeviceFeatures physicalDeviceFeatures = { 0 };
-	optional queueFamilyIndex = { 0 };
+	if (CheckDeviceExtensionsAvailability(&physicalDevice) == FALSE)
+	{
+		error("Device Does not support the required Device Extensions.");
+		return;
+	}
 
-	physicalDeviceFeatures = GetPhysicalDeviceFeatures(&physicalDevice);
-	queueFamilyIndex = GetPhysicalDeviceQueueFamily(&physicalDevice);
-
-	if (queueFamilyIndex.hasValue == FALSE)
+	optional graphicsQueueFamilyIndex = { 0 };
+	graphicsQueueFamilyIndex = GetPhysicalDeviceGraphicsQueueFamily(&physicalDevice);
+	if (graphicsQueueFamilyIndex.hasValue == FALSE)
 	{
 		error("GRAPHICS_BIT Queue Family not Found on Selected Device.");
 		return;
 	}
 
-	CreateLogicalDevice(&physicalDevice, &physicalDeviceFeatures, queueFamilyIndex.value, &logicalDevice);
-	GetDeviceQueue(&logicalDevice, queueFamilyIndex.value, 0, &defaultQueue);
+	optional presentationQueueFamilyIndex = { 0 };
+	presentationQueueFamilyIndex = GetPhysicalDevicePresentationQueueFamily(&physicalDevice, &vulkanSurface);
+	if (presentationQueueFamilyIndex.hasValue == FALSE)
+	{
+		error("Selected Device Does not Support Presentation Queue Family.");
+		return;
+	}
+
+	VkPhysicalDeviceFeatures physicalDeviceFeatures = { 0 };
+	physicalDeviceFeatures = GetPhysicalDeviceFeatures(&physicalDevice);
+
+	CreateLogicalDevice(&physicalDevice, &physicalDeviceFeatures, graphicsQueueFamilyIndex.value, presentationQueueFamilyIndex.value, &logicalDevice);
+
+	GetDeviceQueue(&logicalDevice, graphicsQueueFamilyIndex.value, 0, &graphicsQueue);
+	GetDeviceQueue(&logicalDevice, presentationQueueFamilyIndex.value, 0, &presentationQueue);
 
 	MSG	msg = {0};
 	while (GetAndDispatchWindowMessage(hWnd, &msg) == TRUE);
 
-	exitCode = msg.wParam;
+	exitCode = (uint32_t) msg.wParam;
 
 	DestroyVulkanDevice(&logicalDevice);
 	DestroyVulkanSurface(&vulkanSurface, &vulkanInstance);

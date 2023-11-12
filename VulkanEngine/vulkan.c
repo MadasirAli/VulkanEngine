@@ -1,5 +1,64 @@
 #include "vulkan.h"
 
+bool CheckDeviceExtensionsAvailability(VkPhysicalDevice* pVkPhysicalDevice)
+{
+#ifdef ENABLE_DEVICE_EXTENSIONS
+	ENABLED_DEVICE_EXTENSIONS;
+	uint32_t numberOfExtensions = 0;
+	vkEnumerateDeviceExtensionProperties(*pVkPhysicalDevice, NULL, &numberOfExtensions, NULL);
+
+	VkExtensionProperties* pVkExtensionsPropertiesList = calloc(numberOfExtensions, sizeof(VkExtensionProperties));
+	if (pVkExtensionsPropertiesList == NULL)
+	{
+		error("Failed to allocate memory for pVkExtensionsPropertiesList.");
+		return;
+	}
+
+	vkEnumerateDeviceExtensionProperties(*pVkPhysicalDevice, NULL, &numberOfExtensions, pVkExtensionsPropertiesList);
+
+	bool result = TRUE;
+	for (uint32_t x = 0; x < ENABLED_DEVICE_EXTENSIONS_COUNT; x++)
+	{
+		if (result == FALSE)
+			break;
+
+		for (uint32_t i = 0; i < numberOfExtensions; i++)
+		{
+			if (strcmp(pEnabledDeviceExtensions[x], &(pVkExtensionsPropertiesList[i].extensionName)) == 0)
+				break;
+			else if (i == (numberOfExtensions - 1))
+				result = FALSE;
+		}
+	}
+
+	free(pVkExtensionsPropertiesList);
+	return result;
+#endif
+}
+
+optional GetPhysicalDevicePresentationQueueFamily(VkPhysicalDevice* pVkPhysicalDevice, VkSurfaceKHR* pVkSurface)
+{
+	optional result = { 0 };
+
+	uint32_t numberOfQueueFamilies = 0;
+	vkGetPhysicalDeviceQueueFamilyProperties(*pVkPhysicalDevice, &numberOfQueueFamilies, NULL);
+
+	VkBool32 isSupported = 0;
+	for (uint32_t i = 0; i < numberOfQueueFamilies; i++)
+	{
+		vkGetPhysicalDeviceSurfaceSupportKHR(*pVkPhysicalDevice, i, *pVkSurface, &isSupported);
+		if (isSupported)
+		{
+			result.value = i;
+			result.hasValue = TRUE;
+
+			break;
+		}
+	}
+
+	return result;
+}
+
 void CreateVulkanSurface(HWND hWnd, VkSurfaceKHR* pVkSurface, VkInstance* pVkInstance)
 {
 	VkWin32SurfaceCreateInfoKHR vkWin32SurfaceCreateInfo = { 0 };
@@ -19,32 +78,57 @@ void CreateVulkanSurface(HWND hWnd, VkSurfaceKHR* pVkSurface, VkInstance* pVkIns
 
 void GetDeviceQueue(VkDevice* pVkDevice, uint32_t queueFamilyIndex, uint32_t queueIndex, VkQueue* pVkQueue)
 {
+	if (*pVkDevice == NULL)
+	{
+		error("Null Pointer of Logical Device while getting a queue.");
+		return;
+	}
+
 	vkGetDeviceQueue(*pVkDevice, queueFamilyIndex, queueIndex, pVkQueue);
 }
 
-void CreateLogicalDevice(VkPhysicalDevice* pVkPhysicalDevice, VkPhysicalDeviceFeatures* pVkPhysicalDeviceFeatures, uint32_t queueFamilyIndex, VkDevice* pVkDevice)
+void CreateLogicalDevice(VkPhysicalDevice* pVkPhysicalDevice, VkPhysicalDeviceFeatures* pVkPhysicalDeviceFeatures, uint32_t graphicsQueueFamilyIndex, uint32_t presentationQueueFamilyIndex,VkDevice* pVkDevice)
 {
-	VkDeviceQueueCreateInfo vkDeviceQueueCreateInfo = { 0 };
-	vkDeviceQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	uint32_t queueFamiliesCount = 2;
 
-	vkDeviceQueueCreateInfo.queueFamilyIndex = queueFamilyIndex;
-	vkDeviceQueueCreateInfo.queueCount = 1;
+	if (graphicsQueueFamilyIndex == presentationQueueFamilyIndex)
+		queueFamiliesCount--;
 
-	const float QueuePriority = QUEUE_PRIORITY;
-	vkDeviceQueueCreateInfo.pQueuePriorities = &QueuePriority;
+	VkDeviceQueueCreateInfo* pVkDeviceQueueCreateInfoList = calloc(queueFamiliesCount, sizeof(VkDeviceQueueCreateInfo));
+
+	if (pVkDeviceQueueCreateInfoList == NULL)
+	{
+		error("Failed to allocate memory for vkDeviceQueueCreateInfoList");
+		return;
+	}
+
+	pVkDeviceQueueCreateInfoList[0].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	pVkDeviceQueueCreateInfoList[0].queueFamilyIndex = graphicsQueueFamilyIndex;
+	pVkDeviceQueueCreateInfoList[0].queueCount = 1;
+	const float graphicsQueuePriority = GRAPHICS_QUEUE_PRIORITY;
+	pVkDeviceQueueCreateInfoList[0].pQueuePriorities = &graphicsQueuePriority;
+
+	if (queueFamiliesCount > 1)
+	{
+		pVkDeviceQueueCreateInfoList[1].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		pVkDeviceQueueCreateInfoList[1].queueFamilyIndex = presentationQueueFamilyIndex;
+		pVkDeviceQueueCreateInfoList[1].queueCount = 1;
+		const float presentationQueuePriority = PRESENTATION_QUEUE_PRIORITY;
+		pVkDeviceQueueCreateInfoList[1].pQueuePriorities = &presentationQueuePriority;
+	}
 
 	VkDeviceCreateInfo vkDeviceCreateInfo = { 0 };
 	vkDeviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
-	vkDeviceCreateInfo.pQueueCreateInfos = &vkDeviceQueueCreateInfo;
-	vkDeviceCreateInfo.queueCreateInfoCount = 1;
+	vkDeviceCreateInfo.pQueueCreateInfos = pVkDeviceQueueCreateInfoList;
+	vkDeviceCreateInfo.queueCreateInfoCount = queueFamiliesCount;
 
 	vkDeviceCreateInfo.pEnabledFeatures = pVkPhysicalDeviceFeatures;
 
 #ifdef ENABLE_DEVICE_EXTENSIONS
-	ENABLED_EXTENSIONS;
-	vkDeviceCreateInfo.ppEnabledExtensionNames = pEnabledExtensions;
-	vkDeviceCreateInfo.enabledExtensionCount = ENABLED_EXTENSIONS_COUNT;
+	ENABLED_DEVICE_EXTENSIONS;
+	vkDeviceCreateInfo.ppEnabledExtensionNames = pEnabledDeviceExtensions;
+	vkDeviceCreateInfo.enabledExtensionCount = ENABLED_DEVICE_EXTENSIONS_COUNT;
 #endif
 
 #ifdef _DEBUG
@@ -58,10 +142,12 @@ void CreateLogicalDevice(VkPhysicalDevice* pVkPhysicalDevice, VkPhysicalDeviceFe
 	if (result != VK_SUCCESS)
 	{
 		error("Failed to Create Logical Device.");
+		free(pVkDeviceQueueCreateInfoList);
 		return;
 	}
 
 	log("Logical Device Created.");
+	free(pVkDeviceQueueCreateInfoList);
 }
 
 void CreateVulkanInstance(VkInstance* pVulkanInstance)
@@ -115,7 +201,7 @@ void GetPhysicalDevice(VkInstance* pVulkanInstance, VkPhysicalDevice* pVkPhysica
 		return;
 	}
 
-	VkPhysicalDevice* pPhysicalDeviceList = malloc(sizeof(VkPhysicalDevice) * numberOfDevices);
+	VkPhysicalDevice* pPhysicalDeviceList = calloc(numberOfDevices, sizeof(VkPhysicalDevice));
 
 	if (pPhysicalDeviceList == NULL)
 	{
@@ -157,14 +243,14 @@ VkPhysicalDeviceFeatures GetPhysicalDeviceFeatures(VkPhysicalDevice* pVkPhysical
 	return vkPhysicalDeviceFeatures;
 }
 
-optional GetPhysicalDeviceQueueFamily(VkPhysicalDevice* pVkPhysicalDevice)
+optional GetPhysicalDeviceGraphicsQueueFamily(VkPhysicalDevice* pVkPhysicalDevice)
 {
 	optional result = { 0 };
 
 	uint32_t numberOfQueueFamilies = 0;
 	vkGetPhysicalDeviceQueueFamilyProperties(*pVkPhysicalDevice, &numberOfQueueFamilies, NULL);
 
-	VkQueueFamilyProperties* pQueueFamiliesList = malloc(sizeof(VkQueueFamilyProperties) * numberOfQueueFamilies);
+	VkQueueFamilyProperties* pQueueFamiliesList = calloc(numberOfQueueFamilies, sizeof(VkQueueFamilyProperties));
 
 	if (pQueueFamiliesList == NULL)
 	{
