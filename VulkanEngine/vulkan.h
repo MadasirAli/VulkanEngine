@@ -9,12 +9,14 @@
 #define ENABLE_EXTENSIONS
 #define ENABLE_DEVICE_EXTENSIONS
 
+#define API_VERSION VK_API_VERSION_1_0
+
 #define ENABLED_LAYERS_COUNT 1
 #define ENABLED_EXTENSIONS_COUNT 2
 #define ENABLED_DEVICE_EXTENSIONS_COUNT 1
 
 #define ENABLED_LAYERS const char* pEnabledLayers[ENABLED_LAYERS_COUNT] = {"VK_LAYER_KHRONOS_validation"}
-#define ENABLED_EXTENSIONS const char* pEnabledExtensions[ENABLED_EXTENSIONS_COUNT] = {"VK_KHR_surface", "VK_KHR_win32_surface"}
+#define ENABLED_EXTENSIONS const char* pEnabledExtensions[ENABLED_EXTENSIONS_COUNT] = {VK_KHR_SURFACE_EXTENSION_NAME, VK_KHR_WIN32_SURFACE_EXTENSION_NAME}
 #define ENABLED_DEVICE_EXTENSIONS const char* pEnabledDeviceExtensions[ENABLED_DEVICE_EXTENSIONS_COUNT] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME}
 
 #define GRAPHICS_QUEUE_PRIORITY 1.0f
@@ -29,6 +31,9 @@ VkPhysicalDeviceFeatures GetPhysicalDeviceFeatures(VkPhysicalDevice* pVkPhysical
 optional GetPhysicalDeviceGraphicsQueueFamily(VkPhysicalDevice* pVkPhysicalDevice);
 optional GetPhysicalDevicePresentationQueueFamily(VkPhysicalDevice* pVkPhysicalDevice, VkSurfaceKHR* pVkSurface);
 void GetDeviceQueue(VkDevice* pVkDevice, uint32_t queueFamilyIndex, uint32_t queueIndex, VkQueue* pVkQueue);
+
+bool CheckDeviceExtensionsAvailability(VkPhysicalDevice* pVkPhysicalDevice);
+bool CheckInstanceExtensionsAvailability();
 
 void ShowPhysicalDeviceDetails(VkPhysicalDevice* pVkPhysicalDevice);
 

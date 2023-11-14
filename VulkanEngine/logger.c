@@ -1,6 +1,8 @@
 #include "logger.h"
+#include "ctypes.h"
 
 #include<stdio.h>
+#include<windows.h>
 
 void log(char* msg)
 {
@@ -12,4 +14,8 @@ void log(char* msg)
 void error(char* msg)
 {
 	printf("ERROR: %s\n", msg);
+
+#ifndef _DEBUG
+	ExitProcess(MAXUINT32);
+#endif
 }

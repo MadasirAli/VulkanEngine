@@ -1,5 +1,10 @@
 #include "vulkan.h"
 
+void CheckSwapChainRequirements()
+{
+
+}
+
 bool CheckDeviceExtensionsAvailability(VkPhysicalDevice* pVkPhysicalDevice)
 {
 #ifdef ENABLE_DEVICE_EXTENSIONS
@@ -11,7 +16,7 @@ bool CheckDeviceExtensionsAvailability(VkPhysicalDevice* pVkPhysicalDevice)
 	if (pVkExtensionsPropertiesList == NULL)
 	{
 		error("Failed to allocate memory for pVkExtensionsPropertiesList.");
-		return;
+		return FALSE;
 	}
 
 	vkEnumerateDeviceExtensionProperties(*pVkPhysicalDevice, NULL, &numberOfExtensions, pVkExtensionsPropertiesList);
@@ -22,9 +27,13 @@ bool CheckDeviceExtensionsAvailability(VkPhysicalDevice* pVkPhysicalDevice)
 		if (result == FALSE)
 			break;
 
+		const char* pCurrentEnabledDeviceExtension = pEnabledDeviceExtensions[x];
+
 		for (uint32_t i = 0; i < numberOfExtensions; i++)
 		{
-			if (strcmp(pEnabledDeviceExtensions[x], &(pVkExtensionsPropertiesList[i].extensionName)) == 0)
+			const char* pCurrentDeviceExtension = (char*) (&pVkExtensionsPropertiesList[i].extensionName);
+
+			if (strcmp(pCurrentEnabledDeviceExtension, pCurrentDeviceExtension) == 0)
 				break;
 			else if (i == (numberOfExtensions - 1))
 				result = FALSE;
@@ -89,6 +98,12 @@ void GetDeviceQueue(VkDevice* pVkDevice, uint32_t queueFamilyIndex, uint32_t que
 
 void CreateLogicalDevice(VkPhysicalDevice* pVkPhysicalDevice, VkPhysicalDeviceFeatures* pVkPhysicalDeviceFeatures, uint32_t graphicsQueueFamilyIndex, uint32_t presentationQueueFamilyIndex,VkDevice* pVkDevice)
 {
+	if (CheckDeviceExtensionsAvailability(pVkPhysicalDevice) == FALSE)
+	{
+		error("Selected Physical Device Does not support the required device level Extensions.");
+		return;
+	}
+
 	uint32_t queueFamiliesCount = 2;
 
 	if (graphicsQueueFamilyIndex == presentationQueueFamilyIndex)
@@ -150,15 +165,62 @@ void CreateLogicalDevice(VkPhysicalDevice* pVkPhysicalDevice, VkPhysicalDeviceFe
 	free(pVkDeviceQueueCreateInfoList);
 }
 
+bool CheckInstanceExtensionsAvailability()
+{
+#ifndef ENABLED_EXTENSIONS
+	return TRUE;
+#endif
+
+	ENABLED_EXTENSIONS;
+
+	uint32_t numberOfExtensions = 0;
+	vkEnumerateInstanceExtensionProperties(NULL, &numberOfExtensions, NULL);
+
+	VkExtensionProperties* pVkExtensionPropertiesList = calloc(numberOfExtensions, sizeof(VkExtensionProperties));
+	if (pVkExtensionPropertiesList == NULL)
+	{
+		error("Failed to allocate memory for pVkExtensionPropertiesList (Instance Leve).");
+		return FALSE;
+	}
+
+	vkEnumerateInstanceExtensionProperties(NULL, &numberOfExtensions, pVkExtensionPropertiesList);
+	bool result = TRUE;
+	for (uint32_t x = 0; x < ENABLED_EXTENSIONS_COUNT; x++)
+	{
+		if (result == FALSE)
+			break;
+
+		const char* pCurrentEnabledDeviceExtension = pEnabledExtensions[x];
+
+		for (uint32_t i = 0; i < numberOfExtensions; i++)
+		{
+			const char* pCurrentDeviceExtension = (char*) (&pVkExtensionPropertiesList[i].extensionName);
+
+			if (strcmp(pCurrentEnabledDeviceExtension, pCurrentDeviceExtension) == 0)
+				break;
+			else if (i == (numberOfExtensions - 1))
+				result = FALSE;
+		}
+	}
+
+	return result;
+}
+
 void CreateVulkanInstance(VkInstance* pVulkanInstance)
 {
+	if (CheckInstanceExtensionsAvailability() == FALSE)
+	{
+		error("System Does not Support the Required Instance Extensions");
+		return;
+	}
+
 	VkApplicationInfo vkApplicationInfo = { 0 };
 	vkApplicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	vkApplicationInfo.pApplicationName = "VulkanEngine";
-	vkApplicationInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+	vkApplicationInfo.applicationVersion = API_VERSION;
 	vkApplicationInfo.pEngineName = "VulkanEngine";
-	vkApplicationInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-	vkApplicationInfo.apiVersion = VK_API_VERSION_1_0;
+	vkApplicationInfo.engineVersion = API_VERSION;
+	vkApplicationInfo.apiVersion = API_VERSION;
 
 	VkInstanceCreateInfo vkInstanceCreateInfo = { 0 };
 	vkInstanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
