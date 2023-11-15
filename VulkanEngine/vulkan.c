@@ -1,8 +1,147 @@
 #include "vulkan.h"
 
-void CheckSwapChainRequirements()
+void CreateSwapchain(VkPhysicalDevice* pVkPhysicalDevice, VkDevice* pVkDevice, VkSurfaceKHR* pVkSurfaceKHR, VkSwapchainKHR* pVkSwapchainKHR)
 {
+	VkResult result = {0};
 
+	VkSurfaceCapabilitiesKHR vkSurfaceCapabilitiesKHR = { 0 };
+	result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(*pVkPhysicalDevice, *pVkSurfaceKHR, &vkSurfaceCapabilitiesKHR);
+
+	if (result != VK_SUCCESS)
+	{
+		error("Enable to get physical device surface capabilities");
+		return;
+	}
+
+	if (vkSurfaceCapabilitiesKHR.currentExtent.width == MAXUINT32)
+	{
+		error("Needs Surface Capabilities Extend2D to be redefined.");
+		return;
+	}
+
+	VkExtent2D windowSize = { 0 };
+	windowSize = vkSurfaceCapabilitiesKHR.currentExtent;
+	uint32_t imageCount = 0;
+	if (vkSurfaceCapabilitiesKHR.maxImageCount > 0 && vkSurfaceCapabilitiesKHR.minImageCount + 1 <= vkSurfaceCapabilitiesKHR.maxImageCount)
+		imageCount = vkSurfaceCapabilitiesKHR.minImageCount + 1;
+	else imageCount = vkSurfaceCapabilitiesKHR.maxImageCount;
+
+	uint32_t numberofSurfaceFormats = 0;
+	result = vkGetPhysicalDeviceSurfaceFormatsKHR(*pVkPhysicalDevice, *pVkSurfaceKHR, &numberofSurfaceFormats, NULL);
+
+	if (result != VK_SUCCESS)
+	{
+		error("Failed to GetPhysicalDeviceSurfaceFormatesKHR Count");
+		return;
+	}
+
+	VkSurfaceFormatKHR* pVkSurfaceFormatKHRList = calloc(numberofSurfaceFormats, sizeof(VkSurfaceFormatKHR));
+	if (pVkSurfaceFormatKHRList == NULL)
+	{
+		error("Failed to allocate memory for pVkSurfaceFormatKHRList.");
+		return;
+	}
+
+	result = vkGetPhysicalDeviceSurfaceFormatsKHR(*pVkPhysicalDevice, *pVkSurfaceKHR, &numberofSurfaceFormats, pVkSurfaceFormatKHRList);
+
+	if (result != VK_SUCCESS)
+	{
+		error("Failed to GetPhysicalDeviceSurfaceFormatsKHR in List (allocated memory).");
+		return;
+	}
+
+	VkSurfaceFormatKHR surfaceFormat = { 0 };
+	for (uint32_t i = 0; i < numberofSurfaceFormats; i++)
+	{
+		if (pVkSurfaceFormatKHRList[i].format == VK_FORMAT_R8G8B8A8_SRGB && pVkSurfaceFormatKHRList[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+		{
+			surfaceFormat = pVkSurfaceFormatKHRList[i];
+			break;
+		}
+		else if (i == (numberofSurfaceFormats - 1))
+			surfaceFormat = pVkSurfaceFormatKHRList[0];
+	}
+
+	uint32_t numberOfPresentModes = 0;
+	result = vkGetPhysicalDeviceSurfacePresentModesKHR(*pVkPhysicalDevice, *pVkSurfaceKHR, &numberOfPresentModes, NULL);
+
+	if (result != VK_SUCCESS)
+	{
+		error("Failed to GetPhysicalDeviceSurfacePresentModesKHR count.");
+		return;
+	}
+
+	VkPresentModeKHR* pVkPresentModeKHRList = calloc(numberOfPresentModes, sizeof(VkPresentModeKHR));
+	if (pVkPresentModeKHRList == NULL)
+	{
+		error("Failed to allocate memory for pVkPresentModeKHRList.");
+		return;
+	}
+
+	result = vkGetPhysicalDeviceSurfacePresentModesKHR(*pVkPhysicalDevice, *pVkSurfaceKHR, &numberOfPresentModes, pVkPresentModeKHRList);
+
+	if (result != VK_SUCCESS)
+	{
+		error("Failed to GetPhysicalDeviceSurfacePresentModesKHR in list (allocated memory).");
+		return;
+	}
+
+	VkPresentModeKHR presentMode = { 0 };
+	for (uint32_t i = 0; i < numberOfPresentModes; i++)
+	{
+		if (pVkPresentModeKHRList[i] == VK_PRESENT_MODE_FIFO_KHR)
+		{
+			presentMode = pVkPresentModeKHRList[i];
+			break;
+		}
+	}
+
+	uint32_t graphicsQueueFamilyIndex = GetPhysicalDeviceGraphicsQueueFamily(pVkPhysicalDevice).value;
+	uint32_t presentationQueueFamilyIndex = GetPhysicalDevicePresentationQueueFamily(pVkPhysicalDevice, pVkSurfaceKHR).value;
+
+	VkSwapchainCreateInfoKHR vkSwapChainCreateInfoKHR = { 0 };
+
+	vkSwapChainCreateInfoKHR.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	vkSwapChainCreateInfoKHR.surface = *pVkSurfaceKHR;
+	vkSwapChainCreateInfoKHR.minImageCount = imageCount;
+	vkSwapChainCreateInfoKHR.imageFormat = surfaceFormat.format;
+	vkSwapChainCreateInfoKHR.imageColorSpace = surfaceFormat.colorSpace;
+	vkSwapChainCreateInfoKHR.imageExtent = windowSize;
+	vkSwapChainCreateInfoKHR.imageArrayLayers = 1;
+	vkSwapChainCreateInfoKHR.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+	if (graphicsQueueFamilyIndex != presentationQueueFamilyIndex)
+	{
+		vkSwapChainCreateInfoKHR.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+		vkSwapChainCreateInfoKHR.queueFamilyIndexCount = 2;
+
+		const uint32_t queueFamilyIndices[2] = { graphicsQueueFamilyIndex, presentationQueueFamilyIndex };
+		vkSwapChainCreateInfoKHR.pQueueFamilyIndices = &queueFamilyIndices;
+	}
+	else
+	{
+		vkSwapChainCreateInfoKHR.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		vkSwapChainCreateInfoKHR.queueFamilyIndexCount = 0;
+		vkSwapChainCreateInfoKHR.pQueueFamilyIndices = NULL;
+	}
+
+	vkSwapChainCreateInfoKHR.preTransform = vkSurfaceCapabilitiesKHR.currentTransform;
+	vkSwapChainCreateInfoKHR.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+
+	vkSwapChainCreateInfoKHR.presentMode = presentMode;
+	vkSwapChainCreateInfoKHR.clipped = VK_TRUE;
+
+	vkSwapChainCreateInfoKHR.oldSwapchain = VK_NULL_HANDLE;
+
+	result = vkCreateSwapchainKHR(*pVkDevice, &vkSwapChainCreateInfoKHR, NULL, pVkSwapchainKHR);
+
+	if (result != VK_SUCCESS)
+	{
+		error("Failed to Create Swap Chain.");
+		return;
+	}
+
+	log("Swap Chain Created.");
 }
 
 bool CheckDeviceExtensionsAvailability(VkPhysicalDevice* pVkPhysicalDevice)
@@ -52,7 +191,7 @@ optional GetPhysicalDevicePresentationQueueFamily(VkPhysicalDevice* pVkPhysicalD
 	uint32_t numberOfQueueFamilies = 0;
 	vkGetPhysicalDeviceQueueFamilyProperties(*pVkPhysicalDevice, &numberOfQueueFamilies, NULL);
 
-	VkBool32 isSupported = 0;
+	VkBool32 isSupported = VK_FALSE;
 	for (uint32_t i = 0; i < numberOfQueueFamilies; i++)
 	{
 		vkGetPhysicalDeviceSurfaceSupportKHR(*pVkPhysicalDevice, i, *pVkSurface, &isSupported);
@@ -339,9 +478,15 @@ optional GetPhysicalDeviceGraphicsQueueFamily(VkPhysicalDevice* pVkPhysicalDevic
 	return result;
 }
 
+void DestroyVulkanSwapchain(VkDevice* pVkDevice, VkSwapchainKHR* pVkSwapchain)
+{
+	log("Destroyed Vulkan Swapchain.");
+	vkDestroySwapchainKHR(*pVkDevice, *pVkSwapchain, NULL);
+}
+
 void DestroyVulkanSurface(VkSurfaceKHR* pVkSurface, VkInstance* pVkInstance)
 {
-	log("Vulkan Surface Destroyed.");
+	log("Destroyed Vulkan Surface.");
 	vkDestroySurfaceKHR(*pVkInstance, *pVkSurface, NULL);
 }
 

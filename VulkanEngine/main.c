@@ -14,6 +14,8 @@ int main()
 
 	VkSurfaceKHR vulkanSurface = NULL;
 
+	VkSwapchainKHR swapChain = NULL;
+
 	CreateVulkanInstance(&vulkanInstance);
 
 	hWnd = CreateWindowInstance(L"Test Window", WindowProc);
@@ -51,11 +53,14 @@ int main()
 	GetDeviceQueue(&logicalDevice, graphicsQueueFamilyIndex.value, 0, &graphicsQueue);
 	GetDeviceQueue(&logicalDevice, presentationQueueFamilyIndex.value, 0, &presentationQueue);
 
+	CreateSwapchain(&physicalDevice, &logicalDevice, &vulkanSurface, &swapChain);
+
 	MSG	msg = {0};
 	while (GetAndDispatchWindowMessage(hWnd, &msg) == TRUE);
 
 	exitCode = (uint32_t) msg.wParam;
 
+	DestroyVulkanSwapchain(&logicalDevice, &swapChain);
 	DestroyVulkanDevice(&logicalDevice);
 	DestroyVulkanSurface(&vulkanSurface, &vulkanInstance);
 	DestroyWindow(hWnd);
