@@ -15,6 +15,10 @@ int main()
 	VkSurfaceKHR vulkanSurface = NULL;
 
 	VkSwapchainKHR swapChain = NULL;
+	VkImage* pVkSwapchainImageList = NULL;
+	uint32_t numberOfSwapchainImages = 0;
+	VkFormat swapChainImageFormat = 0;
+	VkExtent2D swapChainExtend2D = { 0 };
 
 	CreateVulkanInstance(&vulkanInstance);
 
@@ -53,13 +57,15 @@ int main()
 	GetDeviceQueue(&logicalDevice, graphicsQueueFamilyIndex.value, 0, &graphicsQueue);
 	GetDeviceQueue(&logicalDevice, presentationQueueFamilyIndex.value, 0, &presentationQueue);
 
-	CreateSwapchain(&physicalDevice, &logicalDevice, &vulkanSurface, &swapChain);
+	CreateSwapchain(&physicalDevice, &logicalDevice, &vulkanSurface, &swapChain, &swapChainImageFormat, &swapChainExtend2D);
+	pVkSwapchainImageList = GetSwapchainImages(&logicalDevice, &swapChain, &numberOfSwapchainImages);
 
 	MSG	msg = {0};
 	while (GetAndDispatchWindowMessage(hWnd, &msg) == TRUE);
 
 	exitCode = (uint32_t) msg.wParam;
 
+	FreeSwapChainImages(pVkSwapchainImageList);
 	DestroyVulkanSwapchain(&logicalDevice, &swapChain);
 	DestroyVulkanDevice(&logicalDevice);
 	DestroyVulkanSurface(&vulkanSurface, &vulkanInstance);
@@ -73,7 +79,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	switch (msg)
 	{
 	case WM_CLOSE:
-		PostQuitMessage(1);
+		PostQuitMessage(CLOSE_UI_EXIT_CODE);
 		return 0;
 	}
 

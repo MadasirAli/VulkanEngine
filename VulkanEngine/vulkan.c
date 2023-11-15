@@ -1,6 +1,48 @@
 #include "vulkan.h"
 
-void CreateSwapchain(VkPhysicalDevice* pVkPhysicalDevice, VkDevice* pVkDevice, VkSurfaceKHR* pVkSurfaceKHR, VkSwapchainKHR* pVkSwapchainKHR)
+void FreeSwapChainImages(VkImage* pVkImageList)
+{
+	if (pVkImageList == NULL)
+	{
+		error("pVkImageList is a Null Pointer, Failed to Free allocated memory.");
+		return;
+	}
+
+	free(pVkImageList);
+}
+
+VkImage* GetSwapchainImages(VkDevice* pVkDevice, VkSwapchainKHR* pVkSwapchainKHR, uint32_t* numberOfImages)
+{
+	VkResult result = { 0 };
+
+	result = vkGetSwapchainImagesKHR(*pVkDevice, *pVkSwapchainKHR, numberOfImages, NULL);
+
+	if (result != VK_SUCCESS)
+	{
+		error("Failed to get number of images in swap chain");
+		return NULL;
+	}
+
+	VkImage* pVkImageList = calloc(*numberOfImages, sizeof(VkImage));
+
+	if (pVkImageList == NULL)
+	{
+		error("Failed to allocate memory for pVkImageList.");
+		return NULL;
+	}
+
+	result = vkGetSwapchainImagesKHR(*pVkDevice, *pVkSwapchainKHR, numberOfImages, pVkImageList);
+
+	if (result != VK_SUCCESS)
+	{
+		error("Failed to get swap chain images in list (allocated memory).");
+		return NULL;
+	}
+
+	return pVkImageList;
+}
+
+void CreateSwapchain(VkPhysicalDevice* pVkPhysicalDevice, VkDevice* pVkDevice, VkSurfaceKHR* pVkSurfaceKHR, VkSwapchainKHR* pVkSwapchainKHR, VkFormat* pVkFormat, VkExtent2D* pVkExtend2D)
 {
 	VkResult result = {0};
 
@@ -116,7 +158,7 @@ void CreateSwapchain(VkPhysicalDevice* pVkPhysicalDevice, VkDevice* pVkDevice, V
 		vkSwapChainCreateInfoKHR.queueFamilyIndexCount = 2;
 
 		const uint32_t queueFamilyIndices[2] = { graphicsQueueFamilyIndex, presentationQueueFamilyIndex };
-		vkSwapChainCreateInfoKHR.pQueueFamilyIndices = &queueFamilyIndices;
+		vkSwapChainCreateInfoKHR.pQueueFamilyIndices = queueFamilyIndices;
 	}
 	else
 	{
@@ -142,6 +184,9 @@ void CreateSwapchain(VkPhysicalDevice* pVkPhysicalDevice, VkDevice* pVkDevice, V
 	}
 
 	log("Swap Chain Created.");
+
+	*pVkExtend2D = windowSize;
+	*pVkFormat = surfaceFormat.format;
 }
 
 bool CheckDeviceExtensionsAvailability(VkPhysicalDevice* pVkPhysicalDevice)
