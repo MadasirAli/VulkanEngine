@@ -1,5 +1,59 @@
 #include "vulkan.h"
 
+void FreeSwapchainImageViews(VkDevice* pVkDevice, VkImageView* pVkImageViewList, uint32_t numberOfImageViews)
+{
+	log("Destroyed Image Views.");
+	for (uint32_t i = 0; i < numberOfImageViews; i++)
+	{
+		vkDestroyImageView(*pVkDevice, pVkImageViewList[i], NULL);
+	}
+
+	free(pVkImageViewList);
+}
+
+VkImageView* CreateSwapchainImageViews(VkDevice* pVkDevice, VkImage* pVkSwapchainImages, uint32_t numberOfImages, VkFormat* pVkImageFormat)
+{
+	VkResult result = { 0 };
+
+	VkImageView* pVkImageViewList = calloc(numberOfImages, sizeof(VkImageView));
+
+	if (pVkImageViewList == NULL)
+	{
+		error("Failed to allocate memory pVkImageViewList.");
+		return NULL;
+	}
+
+	for (uint32_t i = 0; i < numberOfImages; i++)
+	{
+		VkImageViewCreateInfo vkImageViewCreateInfo = { 0 };
+		vkImageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		vkImageViewCreateInfo.image = pVkSwapchainImages[i];
+		vkImageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		vkImageViewCreateInfo.format = *pVkImageFormat;
+		vkImageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		vkImageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		vkImageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		vkImageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+		vkImageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		vkImageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+		vkImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+		vkImageViewCreateInfo.subresourceRange.layerCount = 1;
+		vkImageViewCreateInfo.subresourceRange.levelCount = 1;
+		
+		result = vkCreateImageView(*pVkDevice, &vkImageViewCreateInfo, NULL, &pVkImageViewList[i]);
+
+		if (result != VK_SUCCESS)
+		{
+			error("Failed to Create Image View.");
+			return NULL;
+		}
+	}
+
+	log("Created Image Views.");
+
+	return pVkImageViewList;
+}
+
 void FreeSwapChainImages(VkImage* pVkImageList)
 {
 	if (pVkImageList == NULL)
