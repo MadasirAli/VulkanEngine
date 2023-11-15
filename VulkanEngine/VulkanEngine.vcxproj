@@ -166,15 +166,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ctypes.h" />
+    <ClInclude Include="file.h" />
     <ClInclude Include="logger.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="optional.h" />
     <ClInclude Include="stdbool.h" />
+    <ClInclude Include="stdbyte.h" />
     <ClInclude Include="stdint.h" />
     <ClInclude Include="vulkan.h" />
     <ClInclude Include="window.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="file.c" />
     <ClCompile Include="logger.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="vulkan.c" />

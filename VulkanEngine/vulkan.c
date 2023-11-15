@@ -1,6 +1,42 @@
 #include "vulkan.h"
 
-void FreeSwapchainImageViews(VkDevice* pVkDevice, VkImageView* pVkImageViewList, uint32_t numberOfImageViews)
+void DestroyAndFreeShaderModule(VkDevice* pVkDevice, VkShaderModule* pVkShaderModule, byte* pShaderBytes)
+{
+	log("Destroyed Shader Module.");
+	vkDestroyShaderModule(*pVkDevice, *pVkShaderModule, NULL);
+	free(pShaderBytes);
+}
+
+VkShaderModule CreateShaderModule(VkDevice* pVkDevice, char* shaderName, byte** ppShaderBytes)
+{
+	uint32_t numberOfShaderBytes = 0;
+	*ppShaderBytes = ReadBinary(shaderName, &numberOfShaderBytes);
+
+	if (*ppShaderBytes == NULL)
+	{
+		error("Failed to Read Shader Binary.");
+		return NULL;
+	}
+
+	VkShaderModule vkShaderModule = { 0 };
+
+	VkShaderModuleCreateInfo vkShaderModuleCreateInfo = { 0 };
+	vkShaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	vkShaderModuleCreateInfo.codeSize = numberOfShaderBytes;
+	vkShaderModuleCreateInfo.pCode = (uint32_t*) *ppShaderBytes;
+	
+	VkResult result = vkCreateShaderModule(*pVkDevice, &vkShaderModuleCreateInfo, NULL, &vkShaderModule);
+	if (result != VK_SUCCESS)
+	{
+		error("Failed To Create Shader Module.");
+		return NULL;
+	}
+
+	logf("Shader Module Created: %s\n", shaderName);
+	return vkShaderModule;
+}
+
+void DestroyAndFreeSwapchainImageViews(VkDevice* pVkDevice, VkImageView* pVkImageViewList, uint32_t numberOfImageViews)
 {
 	log("Destroyed Image Views.");
 	for (uint32_t i = 0; i < numberOfImageViews; i++)
@@ -254,15 +290,15 @@ bool CheckDeviceExtensionsAvailability(VkPhysicalDevice* pVkPhysicalDevice)
 	if (pVkExtensionsPropertiesList == NULL)
 	{
 		error("Failed to allocate memory for pVkExtensionsPropertiesList.");
-		return FALSE;
+		return false;
 	}
 
 	vkEnumerateDeviceExtensionProperties(*pVkPhysicalDevice, NULL, &numberOfExtensions, pVkExtensionsPropertiesList);
 
-	bool result = TRUE;
+	bool result = true;
 	for (uint32_t x = 0; x < ENABLED_DEVICE_EXTENSIONS_COUNT; x++)
 	{
-		if (result == FALSE)
+		if (result == false)
 			break;
 
 		const char* pCurrentEnabledDeviceExtension = pEnabledDeviceExtensions[x];
@@ -274,7 +310,7 @@ bool CheckDeviceExtensionsAvailability(VkPhysicalDevice* pVkPhysicalDevice)
 			if (strcmp(pCurrentEnabledDeviceExtension, pCurrentDeviceExtension) == 0)
 				break;
 			else if (i == (numberOfExtensions - 1))
-				result = FALSE;
+				result = false;
 		}
 	}
 
@@ -297,7 +333,7 @@ optional GetPhysicalDevicePresentationQueueFamily(VkPhysicalDevice* pVkPhysicalD
 		if (isSupported)
 		{
 			result.value = i;
-			result.hasValue = TRUE;
+			result.hasValue = true;
 
 			break;
 		}
@@ -336,7 +372,7 @@ void GetDeviceQueue(VkDevice* pVkDevice, uint32_t queueFamilyIndex, uint32_t que
 
 void CreateLogicalDevice(VkPhysicalDevice* pVkPhysicalDevice, VkPhysicalDeviceFeatures* pVkPhysicalDeviceFeatures, uint32_t graphicsQueueFamilyIndex, uint32_t presentationQueueFamilyIndex,VkDevice* pVkDevice)
 {
-	if (CheckDeviceExtensionsAvailability(pVkPhysicalDevice) == FALSE)
+	if (CheckDeviceExtensionsAvailability(pVkPhysicalDevice) == false)
 	{
 		error("Selected Physical Device Does not support the required device level Extensions.");
 		return;
@@ -406,7 +442,7 @@ void CreateLogicalDevice(VkPhysicalDevice* pVkPhysicalDevice, VkPhysicalDeviceFe
 bool CheckInstanceExtensionsAvailability()
 {
 #ifndef ENABLED_EXTENSIONS
-	return TRUE;
+	return true;
 #endif
 
 	ENABLED_EXTENSIONS;
@@ -418,14 +454,14 @@ bool CheckInstanceExtensionsAvailability()
 	if (pVkExtensionPropertiesList == NULL)
 	{
 		error("Failed to allocate memory for pVkExtensionPropertiesList (Instance Leve).");
-		return FALSE;
+		return false;
 	}
 
 	vkEnumerateInstanceExtensionProperties(NULL, &numberOfExtensions, pVkExtensionPropertiesList);
-	bool result = TRUE;
+	bool result = true;
 	for (uint32_t x = 0; x < ENABLED_EXTENSIONS_COUNT; x++)
 	{
-		if (result == FALSE)
+		if (result == false)
 			break;
 
 		const char* pCurrentEnabledDeviceExtension = pEnabledExtensions[x];
@@ -437,7 +473,7 @@ bool CheckInstanceExtensionsAvailability()
 			if (strcmp(pCurrentEnabledDeviceExtension, pCurrentDeviceExtension) == 0)
 				break;
 			else if (i == (numberOfExtensions - 1))
-				result = FALSE;
+				result = false;
 		}
 	}
 
@@ -446,7 +482,7 @@ bool CheckInstanceExtensionsAvailability()
 
 void CreateVulkanInstance(VkInstance* pVulkanInstance)
 {
-	if (CheckInstanceExtensionsAvailability() == FALSE)
+	if (CheckInstanceExtensionsAvailability() == false)
 	{
 		error("System Does not Support the Required Instance Extensions");
 		return;
@@ -567,7 +603,7 @@ optional GetPhysicalDeviceGraphicsQueueFamily(VkPhysicalDevice* pVkPhysicalDevic
 		if (pQueueFamiliesList[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
 		{
 			result.value = i;
-			result.hasValue = TRUE;
+			result.hasValue = true;
 		}
 #pragma warning(pop)
 	}

@@ -29,7 +29,7 @@ int main()
 
 	GetPhysicalDevice(&vulkanInstance, &physicalDevice);
 
-	if (CheckDeviceExtensionsAvailability(&physicalDevice) == FALSE)
+	if (CheckDeviceExtensionsAvailability(&physicalDevice) == false)
 	{
 		error("Device Does not support the required Device Extensions.");
 		return;
@@ -37,7 +37,7 @@ int main()
 
 	optional graphicsQueueFamilyIndex = { 0 };
 	graphicsQueueFamilyIndex = GetPhysicalDeviceGraphicsQueueFamily(&physicalDevice);
-	if (graphicsQueueFamilyIndex.hasValue == FALSE)
+	if (graphicsQueueFamilyIndex.hasValue == false)
 	{
 		error("GRAPHICS_BIT Queue Family not Found on Selected Device.");
 		return;
@@ -45,7 +45,7 @@ int main()
 
 	optional presentationQueueFamilyIndex = { 0 };
 	presentationQueueFamilyIndex = GetPhysicalDevicePresentationQueueFamily(&physicalDevice, &vulkanSurface);
-	if (presentationQueueFamilyIndex.hasValue == FALSE)
+	if (presentationQueueFamilyIndex.hasValue == false)
 	{
 		error("Selected Device Does not Support Presentation Queue Family.");
 		return;
@@ -63,12 +63,16 @@ int main()
 	pVkSwapchainImageList = GetSwapchainImages(&logicalDevice, &swapChain, &numberOfSwapchainImages);
 	pSwapChainImageViewsList = CreateSwapchainImageViews(&logicalDevice, pVkSwapchainImageList, numberOfSwapchainImages, &swapChainImageFormat);
 
+	byte* pVertexShaderBytes = NULL;
+	VkShaderModule vertexShaderModule = CreateShaderModule(&logicalDevice, VERTEX_SHADER_PATH, &pVertexShaderBytes);
+
 	MSG	msg = {0};
-	while (GetAndDispatchWindowMessage(hWnd, &msg) == TRUE);
+	while (GetAndDispatchWindowMessage(hWnd, &msg) == true);
 
 	exitCode = (uint32_t) msg.wParam;
 
-	FreeSwapchainImageViews(&logicalDevice, pSwapChainImageViewsList, numberOfSwapchainImages);
+	DestroyAndFreeShaderModule(&logicalDevice, &vertexShaderModule, pVertexShaderBytes);
+	DestroyAndFreeSwapchainImageViews(&logicalDevice, pSwapChainImageViewsList, numberOfSwapchainImages);
 	FreeSwapChainImages(pVkSwapchainImageList);
 	DestroyVulkanSwapchain(&logicalDevice, &swapChain);
 	DestroyVulkanDevice(&logicalDevice);

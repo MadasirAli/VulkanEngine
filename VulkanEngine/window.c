@@ -2,7 +2,7 @@
 
 void DestroyWindowInstance(HWND hWnd)
 {
-	if (DestroyWindow(hWnd) == FALSE)
+	if (DestroyWindow(hWnd) == false)
 	{
 		error("Failed to Destroy Window");
 	}
@@ -10,16 +10,16 @@ void DestroyWindowInstance(HWND hWnd)
 
 BOOL GetAndDispatchWindowMessage(HWND hWnd, MSG* msgContainer)
 {
-	if (PeekMessageW(msgContainer, hWnd, 0, 0, PM_REMOVE) == FALSE)
-		return TRUE;
+	if (PeekMessageW(msgContainer, hWnd, 0, 0, PM_REMOVE) == false)
+		return true;
 
 	if (msgContainer->message == WM_QUIT)
-		return FALSE;
+		return false;
 
 	TranslateMessage(msgContainer);
 	DispatchMessageW(msgContainer);
 
-	return TRUE;
+	return true;
 }
 
 HWND CreateWindowInstance(wchar_t* windowName, WNDPROC wndProc)
@@ -38,7 +38,7 @@ HWND CreateWindowInstance(wchar_t* windowName, WNDPROC wndProc)
 	wndClassA.lpfnWndProc = wndProc;
 	wndClassA.hInstance = GetModuleHandleA(NULL);
 
-	if (RegisterClassExW(&wndClassA) == FALSE)
+	if (RegisterClassExW(&wndClassA) == false)
 	{
 		error("Failed to Register Window Class.");
 		return NULL;

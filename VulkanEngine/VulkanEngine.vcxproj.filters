@@ -54,6 +54,12 @@
     <ClInclude Include="ctypes.h">
       <Filter>Header Files\ctypes</Filter>
     </ClInclude>
+    <ClInclude Include="file.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="stdbyte.h">
+      <Filter>Header Files\ctypes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">
@@ -67,6 +73,9 @@
     </ClCompile>
     <ClCompile Include="vulkan.c">
       <Filter>Source Files\comps</Filter>
+    </ClCompile>
+    <ClCompile Include="file.c">
+      <Filter>Source Files\utils</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

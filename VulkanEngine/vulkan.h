@@ -1,7 +1,11 @@
 #pragma once
 
+#define VERTEX_SHADER_PATH "shaders\\vertex_shader.spv"
+#define FRAGMENT_SHADER_PATH "shaders\\fragment_shader.spv"
+
 #include"ctypes.h"
 #include"logger.h"
+#include"file.h"
 
 #define VK_USE_PLATFORM_WIN32_KHR
 #include<vulkan\vulkan.h>
@@ -27,6 +31,7 @@ void CreateLogicalDevice(VkPhysicalDevice* pVkPhysicalDevice, VkPhysicalDeviceFe
 void CreateVulkanSurface(HWND hWnd, VkSurfaceKHR* pVkSurface, VkInstance* pVkInstance);
 void CreateSwapchain(VkPhysicalDevice* pVkPhysicalDevice, VkDevice* pVkDevice, VkSurfaceKHR* pVkSurfaceKHR, VkSwapchainKHR* pVkSwapChainKHR, VkFormat* pVkFormat, VkExtent2D* pVkExtend2D);
 VkImageView* CreateSwapchainImageViews(VkDevice* pVkDevice, VkImage* pVkSwapchainImages, uint32_t numberOfImages, VkFormat* pVkImageFormat);
+VkShaderModule CreateShaderModule(VkDevice* pVkDevice, char* shaderName, byte** ppShaderBytes);
 
 void GetPhysicalDevice(VkInstance* pVulkanInstance, VkPhysicalDevice* pVkPhysicalDevice);
 VkPhysicalDeviceFeatures GetPhysicalDeviceFeatures(VkPhysicalDevice* pVkPhysicalDevice);
@@ -45,5 +50,7 @@ void DestroyVulkanInstance(VkInstance* pVulkanInstance);
 void DestroyVulkanSurface(VkSurfaceKHR* pVkSurface, VkInstance* pVkInstance);
 void DestroyVulkanDevice(VkDevice* pVkDevice);
 
+void DestroyAndFreeShaderModule(VkDevice* pVkDevice, VkShaderModule* pVkShaderModule, byte* pShaderBytes);
+
 void FreeSwapChainImages(VkImage* pVkImageList);
-void FreeSwapchainImageViews(VkDevice* pVkDevice, VkImageView* pVkImageViewList, uint32_t numberOfImageViews);
+void DestroyAndFreeSwapchainImageViews(VkDevice* pVkDevice, VkImageView* pVkImageViewList, uint32_t numberOfImageViews);

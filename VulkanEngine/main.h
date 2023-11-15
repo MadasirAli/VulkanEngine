@@ -1,11 +1,11 @@
 #pragma once
-#include<stdlib.h>
 
-#include"logger.h"
 #include"ctypes.h"
+#include"logger.h"
 #include"window.h"
-
 #include"vulkan.h"
+
+#include<stdlib.h>
 
 #define CLOSE_UI_EXIT_CODE 1
 

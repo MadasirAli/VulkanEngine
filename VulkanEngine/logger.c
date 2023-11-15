@@ -11,6 +11,13 @@ void log(char* msg)
 #endif
 }
 
+void logf(char* format, char* msg)
+{
+#ifdef _DEBUG
+	printf(format, msg);
+#endif
+}
+
 void error(char* msg)
 {
 	printf("ERROR: %s\n", msg);

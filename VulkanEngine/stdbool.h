@@ -3,5 +3,5 @@
 #include"stdint.h"
 
 typedef uint32_t bool;
-#define TRUE 1U
-#define FALSE 0U
+#define true 1U
+#define false 0U
