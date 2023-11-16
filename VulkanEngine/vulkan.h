@@ -35,6 +35,8 @@
 #define VERTEX_SHADER_ENTRY_POINT DEFAULT_SHADER_ENTRY_POINT
 #define FRAGMENT_SHADER_ENTRY_POINT DEFAULT_SHADER_ENTRY_POINT
 
+void RecordDrawCommand(VkCommandBuffer* pVkCommandBuffer, VkPipeline* pVkPipeline, VkRenderPass* pVkRenderPass, VkFramebuffer* pVkFrameBufferList, VkExtent2D* pVkSwapchainExtent2D, uint32_t indexOfSwapchainImage);
+
 void CreateVulkanInstance(VkInstance* pVulkanInstance);
 void CreateLogicalDevice(VkPhysicalDevice* pVkPhysicalDevice, VkPhysicalDeviceFeatures* pVkPhysicalDeviceFeatures, uint32_t graphicsQueueFamilyIndex, uint32_t presentationQueueFamilyIndex, VkDevice* pVkDevice);
 void CreateVulkanSurface(HWND hWnd, VkSurfaceKHR* pVkSurface, VkInstance* pVkInstance);

@@ -1,5 +1,84 @@
 #include "vulkan.h"
 
+void RecordDrawCommand(VkCommandBuffer* pVkCommandBuffer, VkPipeline* pVkPipeline , VkRenderPass* pVkRenderPass, VkFramebuffer* pVkFrameBufferList, VkExtent2D* pVkSwapchainExtent2D, uint32_t indexOfSwapchainImage)
+{
+	VkCommandBufferBeginInfo vkCommandBufferBeginInfo = { 0 };
+	vkCommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	vkCommandBufferBeginInfo.flags = 0;
+	vkCommandBufferBeginInfo.pInheritanceInfo = NULL;
+
+	VkResult result = vkBeginCommandBuffer(*pVkCommandBuffer, &vkCommandBufferBeginInfo);
+
+	if (result != VK_SUCCESS)
+	{
+		error("    ----> Failed to Record Draw Command.");
+		return;
+	}
+
+	VkRenderPassBeginInfo vkRenderPassBeginInfo = { 0 };
+	vkRenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	vkRenderPassBeginInfo.renderPass = *pVkRenderPass;
+	vkRenderPassBeginInfo.framebuffer = pVkFrameBufferList[indexOfSwapchainImage];
+
+	VkRect2D vkRenderArea2D = {0};
+
+	VkOffset2D vkRenderAreaOffset2D = { 0 };
+	vkRenderAreaOffset2D.x = 0;
+	vkRenderAreaOffset2D.y = 0;
+
+	vkRenderArea2D.offset = vkRenderAreaOffset2D;
+	vkRenderArea2D.extent = *pVkSwapchainExtent2D;
+
+	vkRenderPassBeginInfo.renderArea = vkRenderArea2D;
+
+	VkClearValue vkClearValue = { 0 };
+	VkClearColorValue vkClearColorValue = { 0 };
+	vkClearColorValue.float32[0] = 0.0f;
+	vkClearColorValue.float32[1] = 0.0f;
+	vkClearColorValue.float32[2] = 0.0f;
+	vkClearColorValue.float32[3] = 1.0f;
+	vkClearValue.color = vkClearColorValue;
+
+	vkRenderPassBeginInfo.clearValueCount = 1;
+	vkRenderPassBeginInfo.pClearValues = &vkClearValue;
+
+	vkCmdBeginRenderPass(*pVkCommandBuffer, &vkRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+	vkCmdBindPipeline(*pVkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pVkPipeline);
+
+#ifdef DYNAMIC_VIEW_PORT
+	VkViewport vkViewport = { 0 };
+	vkViewport.x = 0.0f;
+	vkViewport.y = 0.0f;
+	vkViewport.width = pVkSwapchainExtent2D->width;
+	vkViewport.height = pVkSwapchainExtent2D->height;
+	vkViewport.maxDepth = 1.0f;
+	vkViewport.minDepth = 0.0f;
+
+	vkCmdSetViewport(*pVkCommandBuffer, 0, 1, &vkViewport);
+
+	VkRect2D vkScissor = { 0 };
+	vkScissor.offset.x = 0;
+	vkScissor.offset.y = 0;
+	vkScissor.extent = *pVkSwapchainExtent2D;
+	vkCmdSetScissor(*pVkCommandBuffer, 0, 1, &vkScissor);
+#endif
+
+	vkCmdDraw(*pVkCommandBuffer, 3, 1, 0, 0);
+
+	vkCmdEndRenderPass(*pVkCommandBuffer);
+
+	result = vkEndCommandBuffer(*pVkCommandBuffer);
+
+	if (result != VK_SUCCESS)
+	{
+		error("    ----> Failed to Record Draw Command.");
+		return;
+	}
+
+	log("    ----> Draw Command Recorded.");
+}
+
 void CreateCommandBuffer(VkDevice* pVkDevice, VkCommandPool* pVkCommandPool, VkCommandBuffer* pVkCommandBuffer)
 {
 	VkCommandBufferAllocateInfo vkCommandBufferAllocateInfo = { 0 };

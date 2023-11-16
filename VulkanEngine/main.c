@@ -81,9 +81,15 @@ int main()
 	CreateCommandPool(&logicalDevice, &commandPool, graphicsQueueFamilyIndex.value);
 	CreateCommandBuffer(&logicalDevice, &commandPool, &commandBuffer);
 
+	RecordDrawCommand(&commandBuffer, &pipeLine, &renderPass, pFramebufferList, &swapChainExtend2D, 0);
 
 	MSG	msg = {0};
-	while (GetAndDispatchWindowMessage(hWnd, &msg) == true);
+	while (GetAndDispatchWindowMessage(hWnd, &msg) == true)
+	{
+
+
+		continue;
+	}
 
 	exitCode = (uint32_t) msg.wParam;
 
