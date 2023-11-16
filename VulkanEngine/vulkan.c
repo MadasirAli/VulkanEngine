@@ -1,5 +1,244 @@
 #include "vulkan.h"
 
+void DestroyRenderPass(VkDevice* pVkDevice, VkRenderPass* pVkRenderPass)
+{
+	log("Destroyed Render Pass.");
+	vkDestroyRenderPass(*pVkDevice, *pVkRenderPass, NULL);
+}
+
+void CreateRenderPass(VkDevice* pVkDevice, VkFormat* pVkSwapchainImageFormat, VkRenderPass* pVkRenderPass)
+{
+	VkAttachmentDescription vkColorAttachmentDescription = { 0 };
+	vkColorAttachmentDescription.format = *pVkSwapchainImageFormat;
+	vkColorAttachmentDescription.samples = VK_SAMPLE_COUNT_1_BIT;
+	vkColorAttachmentDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	vkColorAttachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	vkColorAttachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	vkColorAttachmentDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	vkColorAttachmentDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	vkColorAttachmentDescription.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+	VkAttachmentReference vkColorAttachmentReference = { 0 };
+	vkColorAttachmentReference.attachment = 0;
+	vkColorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VkSubpassDescription vkColorSubpassDescription = { 0 };
+	vkColorSubpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	vkColorSubpassDescription.colorAttachmentCount = 1;
+	vkColorSubpassDescription.pColorAttachments = &vkColorAttachmentReference;
+
+	VkRenderPassCreateInfo vkRenderPassCreateInfo = { 0 };
+	vkRenderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	vkRenderPassCreateInfo.attachmentCount = 1;
+	vkRenderPassCreateInfo.pAttachments = &vkColorAttachmentDescription;
+	vkRenderPassCreateInfo.subpassCount = 1;
+	vkRenderPassCreateInfo.pSubpasses = &vkColorSubpassDescription;
+
+	VkResult result = vkCreateRenderPass(*pVkDevice, &vkRenderPassCreateInfo, NULL, pVkRenderPass);
+
+	if (result != VK_SUCCESS)
+	{
+		error("Failed to Create Render Pass.");
+		return;
+	}
+
+	log("Render Pass Created.");
+}
+
+void CreatePipelineLayout(VkDevice* pVkDevice, VkPipelineLayout* pVkPipelineLayout)
+{
+	VkPipelineLayoutCreateInfo vkPipelineLayoutCreateInfo = { 0 };
+	vkPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	vkPipelineLayoutCreateInfo.pushConstantRangeCount = 0;
+	vkPipelineLayoutCreateInfo.pPushConstantRanges = NULL;
+	vkPipelineLayoutCreateInfo.setLayoutCount = 0;
+	vkPipelineLayoutCreateInfo.pSetLayouts = NULL;
+
+	VkResult result = vkCreatePipelineLayout(*pVkDevice, &vkPipelineLayoutCreateInfo, NULL, pVkPipelineLayout);
+
+	if (result != VK_SUCCESS)
+	{
+		error("Failed to Create Pipeline Layout.");
+		return;
+	}
+
+	log("Pipeline Layout Created.");
+}
+
+void DestroyPipeline(VkDevice* pVkDevice, VkPipeline* pVkPipeline)
+{
+	log("Destroyed Pipeline.");
+	vkDestroyPipeline(*pVkDevice, *pVkPipeline, NULL);
+}
+
+void CreatePipeline(VkDevice* pVkDevice, VkPipelineLayout* pVkPipelineLayout, VkRenderPass* pVkRenderPass, VkExtent2D* pVkSwapchainExtent2D, VkPipeline* pVkPipeline)
+{
+	byte* pVertexShaderBytes = NULL;
+	VkShaderModule vkVertexShaderModule = CreateShaderModule(pVkDevice, VERTEX_SHADER_PATH, &pVertexShaderBytes);
+
+	byte* pFragmentShaderBytes = NULL;
+	VkShaderModule vkFragmentShaderModule = CreateShaderModule(pVkDevice, FRAGMENT_SHADER_PATH, &pFragmentShaderBytes);
+
+	VkPipelineShaderStageCreateInfo vkPipelineVertexShaderStageCreateInfo = { 0 };
+	vkPipelineVertexShaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	vkPipelineVertexShaderStageCreateInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+	vkPipelineVertexShaderStageCreateInfo.module = vkVertexShaderModule;
+	vkPipelineVertexShaderStageCreateInfo.pName = VERTEX_SHADER_ENTRY_POINT;
+
+	VkPipelineShaderStageCreateInfo vkPipelineFragmentShaderStageCreateInfo = { 0 };
+	vkPipelineFragmentShaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	vkPipelineFragmentShaderStageCreateInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	vkPipelineFragmentShaderStageCreateInfo.module = vkFragmentShaderModule;
+	vkPipelineFragmentShaderStageCreateInfo.pName = FRAGMENT_SHADER_ENTRY_POINT;
+
+	VkPipelineShaderStageCreateInfo vkPipelineShaderStageCreateInfoList[2] = {
+		vkPipelineVertexShaderStageCreateInfo,
+		vkPipelineFragmentShaderStageCreateInfo
+	};
+
+	VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo = { 0 };
+	vkPipelineVertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	vkPipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount = 0;
+	vkPipelineVertexInputStateCreateInfo.pVertexBindingDescriptions = NULL;
+	vkPipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = 0;
+	vkPipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = NULL;
+
+	VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo = { 0 };
+	vkPipelineInputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	vkPipelineInputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	vkPipelineInputAssemblyStateCreateInfo.primitiveRestartEnable = VK_FALSE;
+
+	VkPipelineViewportStateCreateInfo vkPipelineViewportStateCreateInfo = { 0 };
+	vkPipelineViewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+	vkPipelineViewportStateCreateInfo.viewportCount = 1;
+	vkPipelineViewportStateCreateInfo.scissorCount = 1;
+
+#ifdef DYNAMIC_VIEW_PORT
+	VkDynamicState vkDynamicStatesList[2] = {
+		VK_DYNAMIC_STATE_VIEWPORT,
+		VK_DYNAMIC_STATE_SCISSOR
+	};
+
+	VkPipelineDynamicStateCreateInfo vkPipelineDynamicStateCreateInfo = { 0 };
+	vkPipelineDynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	vkPipelineDynamicStateCreateInfo.dynamicStateCount = 2;
+	vkPipelineDynamicStateCreateInfo.pDynamicStates = vkDynamicStatesList;
+#endif
+
+#ifndef DYNAMIC_VIEW_PORT
+	VkViewport vkViewPort = { 0 };
+	vkViewPort.width = (float)pVkSwapchainExtent2D->width;
+	vkViewPort.height = (float)pVkSwapchainExtent2D->height;
+	vkViewPort.x = 0.0f;
+	vkViewPort.y = 0.0f;
+	vkViewPort.maxDepth = 1.0f;
+	vkViewPort.minDepth = 0.0f;
+
+	VkRect2D vkScissor = { 0 };
+	vkScissor.offset.x = 0;
+	vkScissor.offset.y = 0;
+	vkScissor.extent = *pVkSwapchainExtent2D;
+
+	vkPipelineViewportStateCreateInfo.pViewports = &vkViewPort;
+	vkPipelineViewportStateCreateInfo.pScissors = &vkScissor;
+#endif
+
+	VkPipelineRasterizationStateCreateInfo vkPipelineRasterizationStateCreateInfo = { 0 };
+	vkPipelineRasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+	vkPipelineRasterizationStateCreateInfo.depthClampEnable = VK_FALSE;
+	vkPipelineRasterizationStateCreateInfo.rasterizerDiscardEnable = VK_FALSE;
+	vkPipelineRasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
+	vkPipelineRasterizationStateCreateInfo.lineWidth = 1.0f;
+	vkPipelineRasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+	vkPipelineRasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	vkPipelineRasterizationStateCreateInfo.depthBiasEnable = VK_FALSE;
+	vkPipelineRasterizationStateCreateInfo.depthBiasClamp = 0.0f;
+	vkPipelineRasterizationStateCreateInfo.depthBiasConstantFactor = 0.0f;
+	vkPipelineRasterizationStateCreateInfo.depthBiasSlopeFactor = 0.0f;
+
+	VkPipelineMultisampleStateCreateInfo vkPipelineMultisamplesStateCreateInfo = { 0 };
+	vkPipelineMultisamplesStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	vkPipelineMultisamplesStateCreateInfo.sampleShadingEnable = VK_FALSE;
+	vkPipelineMultisamplesStateCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	vkPipelineMultisamplesStateCreateInfo.minSampleShading = 1.0f;
+	vkPipelineMultisamplesStateCreateInfo.pNext = NULL;
+	vkPipelineMultisamplesStateCreateInfo.alphaToCoverageEnable = VK_FALSE;
+	vkPipelineMultisamplesStateCreateInfo.alphaToOneEnable = VK_FALSE;
+
+	VkPipelineColorBlendAttachmentState vkPipelineColorBlendAttachmentState = { 0 };
+	vkPipelineColorBlendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+		VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+#ifndef ALPHA_BLENDING
+	vkPipelineColorBlendAttachmentState.blendEnable = VK_FALSE;
+	vkPipelineColorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+	vkPipelineColorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+	vkPipelineColorBlendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
+	vkPipelineColorBlendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	vkPipelineColorBlendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+	vkPipelineColorBlendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
+#endif
+#ifdef ALPHA_BLENDING
+	vkPipelineColorBlendAttachmentState.blendEnable = VK_TRUE;
+	vkPipelineColorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+	vkPipelineColorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
+	vkPipelineColorBlendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
+	vkPipelineColorBlendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	vkPipelineColorBlendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+	vkPipelineColorBlendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
+#endif
+
+	VkPipelineColorBlendStateCreateInfo vkPipelineColorBlendStateCreateInfo = { 0 };
+	vkPipelineColorBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+#ifdef COLOR_BLENDING
+	vkPipelineColorBlendStateCreateInfo.logicOpEnable = VK_TRUE;
+#endif
+#ifndef COLOR_BLENDING
+	vkPipelineColorBlendStateCreateInfo.logicOpEnable = VK_FALSE;
+#endif
+	vkPipelineColorBlendStateCreateInfo.logicOp = VK_LOGIC_OP_COPY;
+	vkPipelineColorBlendStateCreateInfo.attachmentCount = 1;
+	vkPipelineColorBlendStateCreateInfo.pAttachments = &vkPipelineColorBlendAttachmentState;
+	vkPipelineColorBlendStateCreateInfo.blendConstants[0] = 0.0f;
+	vkPipelineColorBlendStateCreateInfo.blendConstants[1] = 0.0f;
+	vkPipelineColorBlendStateCreateInfo.blendConstants[2] = 0.0f;
+	vkPipelineColorBlendStateCreateInfo.blendConstants[3] = 0.0f;
+
+	VkGraphicsPipelineCreateInfo vkGraphicsPipelineCreateInfo = { 0 };
+	vkGraphicsPipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	vkGraphicsPipelineCreateInfo.stageCount = 2;
+	vkGraphicsPipelineCreateInfo.pStages = vkPipelineShaderStageCreateInfoList;
+	vkGraphicsPipelineCreateInfo.pVertexInputState = &vkPipelineVertexInputStateCreateInfo;
+	vkGraphicsPipelineCreateInfo.pInputAssemblyState = &vkPipelineInputAssemblyStateCreateInfo;
+	vkGraphicsPipelineCreateInfo.pViewportState = &vkPipelineViewportStateCreateInfo;
+	vkGraphicsPipelineCreateInfo.pRasterizationState = &vkPipelineRasterizationStateCreateInfo;
+	vkGraphicsPipelineCreateInfo.pMultisampleState = &vkPipelineMultisamplesStateCreateInfo;
+	vkGraphicsPipelineCreateInfo.pDepthStencilState = NULL;
+	vkGraphicsPipelineCreateInfo.pColorBlendState = &vkPipelineColorBlendStateCreateInfo;
+	vkGraphicsPipelineCreateInfo.pDynamicState = &vkPipelineDynamicStateCreateInfo;
+	vkGraphicsPipelineCreateInfo.layout = *pVkPipelineLayout;
+	vkGraphicsPipelineCreateInfo.renderPass = *pVkRenderPass;
+	vkGraphicsPipelineCreateInfo.subpass = 0;
+	vkGraphicsPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
+	vkGraphicsPipelineCreateInfo.basePipelineIndex = -1;
+
+	VkResult result = vkCreateGraphicsPipelines(*pVkDevice, VK_NULL_HANDLE, 1, &vkGraphicsPipelineCreateInfo, NULL, pVkPipeline);
+
+	if (result != VK_SUCCESS)
+	{
+		error("Failed to Create Pipeline.");
+
+		DestroyAndFreeShaderModule(pVkDevice, &vkVertexShaderModule, pVertexShaderBytes);
+		DestroyAndFreeShaderModule(pVkDevice, &vkFragmentShaderModule, pFragmentShaderBytes);
+
+		return;
+	}
+
+	DestroyAndFreeShaderModule(pVkDevice, &vkVertexShaderModule, pVertexShaderBytes);
+	DestroyAndFreeShaderModule(pVkDevice, &vkFragmentShaderModule, pFragmentShaderBytes);
+
+	log("Pipeline Created.");
+}
+
 void DestroyAndFreeShaderModule(VkDevice* pVkDevice, VkShaderModule* pVkShaderModule, byte* pShaderBytes)
 {
 	log("Destroyed Shader Module.");
@@ -611,6 +850,13 @@ optional GetPhysicalDeviceGraphicsQueueFamily(VkPhysicalDevice* pVkPhysicalDevic
 	free(pQueueFamiliesList);
 
 	return result;
+}
+
+void DestroyPipelineLayout(VkDevice* pVkDevice, VkPipelineLayout* pVkPipelineLayout)
+{
+	log("Destroyed Pipeline Layout.");
+
+	vkDestroyPipelineLayout(*pVkDevice, *pVkPipelineLayout, NULL);
 }
 
 void DestroyVulkanSwapchain(VkDevice* pVkDevice, VkSwapchainKHR* pVkSwapchain)

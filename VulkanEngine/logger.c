@@ -7,7 +7,7 @@
 void log(char* msg)
 {
 #ifdef _DEBUG
-	printf("LOG: %s\n", msg);
+	printf("\033[1;33mLOG: %s\n\033[1;0m", msg);
 #endif
 }
 
@@ -20,7 +20,7 @@ void logf(char* format, char* msg)
 
 void error(char* msg)
 {
-	printf("ERROR: %s\n", msg);
+	printf("\033[1;31mERROR: %s\n\033[1;0m", msg);
 
 #ifndef _DEBUG
 	ExitProcess(MAXUINT32);

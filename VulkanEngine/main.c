@@ -22,6 +22,10 @@ int main()
 
 	VkImageView* pSwapChainImageViewsList = NULL;
 
+	VkRenderPass  renderPass = NULL;
+	VkPipelineLayout pipelineLayout = NULL;
+	VkPipeline pipeLine = NULL;
+
 	CreateVulkanInstance(&vulkanInstance);
 
 	hWnd = CreateWindowInstance(L"Test Window", WindowProc);
@@ -63,15 +67,18 @@ int main()
 	pVkSwapchainImageList = GetSwapchainImages(&logicalDevice, &swapChain, &numberOfSwapchainImages);
 	pSwapChainImageViewsList = CreateSwapchainImageViews(&logicalDevice, pVkSwapchainImageList, numberOfSwapchainImages, &swapChainImageFormat);
 
-	byte* pVertexShaderBytes = NULL;
-	VkShaderModule vertexShaderModule = CreateShaderModule(&logicalDevice, VERTEX_SHADER_PATH, &pVertexShaderBytes);
+	CreateRenderPass(&logicalDevice, &swapChainImageFormat, &renderPass);
+	CreatePipelineLayout(&logicalDevice, &pipelineLayout);
+	CreatePipeline(&logicalDevice, &pipelineLayout, &renderPass, &swapChainExtend2D, &pipeLine);
 
 	MSG	msg = {0};
 	while (GetAndDispatchWindowMessage(hWnd, &msg) == true);
 
 	exitCode = (uint32_t) msg.wParam;
 
-	DestroyAndFreeShaderModule(&logicalDevice, &vertexShaderModule, pVertexShaderBytes);
+	DestroyPipeline(&logicalDevice, &pipeLine);
+	DestroyRenderPass(&logicalDevice, &renderPass);
+	DestroyPipelineLayout(&logicalDevice, &pipelineLayout);
 	DestroyAndFreeSwapchainImageViews(&logicalDevice, pSwapChainImageViewsList, numberOfSwapchainImages);
 	FreeSwapChainImages(pVkSwapchainImageList);
 	DestroyVulkanSwapchain(&logicalDevice, &swapChain);

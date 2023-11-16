@@ -1,14 +1,16 @@
 #pragma once
 
-#define VERTEX_SHADER_PATH "shaders\\vertex_shader.spv"
-#define FRAGMENT_SHADER_PATH "shaders\\fragment_shader.spv"
-
 #include"ctypes.h"
 #include"logger.h"
 #include"file.h"
 
 #define VK_USE_PLATFORM_WIN32_KHR
 #include<vulkan\vulkan.h>
+
+#define DYNAMIC_VIEW_PORT
+
+#define COLOR_BLENDING
+#define ALPHA_BLENDING
 
 #define ENABLE_EXTENSIONS
 #define ENABLE_DEVICE_EXTENSIONS
@@ -26,12 +28,22 @@
 #define GRAPHICS_QUEUE_PRIORITY 1.0f
 #define PRESENTATION_QUEUE_PRIORITY GRAPHICS_QUEUE_PRIORITY
 
+#define VERTEX_SHADER_PATH "shaders\\vertex_shader.spv"
+#define FRAGMENT_SHADER_PATH "shaders\\fragment_shader.spv"
+
+#define DEFAULT_SHADER_ENTRY_POINT "main"
+#define VERTEX_SHADER_ENTRY_POINT DEFAULT_SHADER_ENTRY_POINT
+#define FRAGMENT_SHADER_ENTRY_POINT DEFAULT_SHADER_ENTRY_POINT
+
 void CreateVulkanInstance(VkInstance* pVulkanInstance);
 void CreateLogicalDevice(VkPhysicalDevice* pVkPhysicalDevice, VkPhysicalDeviceFeatures* pVkPhysicalDeviceFeatures, uint32_t graphicsQueueFamilyIndex, uint32_t presentationQueueFamilyIndex, VkDevice* pVkDevice);
 void CreateVulkanSurface(HWND hWnd, VkSurfaceKHR* pVkSurface, VkInstance* pVkInstance);
 void CreateSwapchain(VkPhysicalDevice* pVkPhysicalDevice, VkDevice* pVkDevice, VkSurfaceKHR* pVkSurfaceKHR, VkSwapchainKHR* pVkSwapChainKHR, VkFormat* pVkFormat, VkExtent2D* pVkExtend2D);
 VkImageView* CreateSwapchainImageViews(VkDevice* pVkDevice, VkImage* pVkSwapchainImages, uint32_t numberOfImages, VkFormat* pVkImageFormat);
 VkShaderModule CreateShaderModule(VkDevice* pVkDevice, char* shaderName, byte** ppShaderBytes);
+void CreateRenderPass(VkDevice* pVkDevice, VkFormat* pVkSwapchainImageFormat, VkRenderPass* pVkRenderPass);
+void CreatePipelineLayout(VkDevice* pVkDevice, VkPipelineLayout* pVkPipelineLayout);
+void CreatePipeline(VkDevice* pVkDevice, VkPipelineLayout* pVkPipelineLayout, VkRenderPass* pVkRenderPass, VkExtent2D* pVkSwapchainExtent2D, VkPipeline* pVkPipeline);
 
 void GetPhysicalDevice(VkInstance* pVulkanInstance, VkPhysicalDevice* pVkPhysicalDevice);
 VkPhysicalDeviceFeatures GetPhysicalDeviceFeatures(VkPhysicalDevice* pVkPhysicalDevice);
@@ -49,6 +61,9 @@ void DestroyVulkanSwapchain(VkDevice* pVkDevice, VkSwapchainKHR* pVkSwapchain);
 void DestroyVulkanInstance(VkInstance* pVulkanInstance);
 void DestroyVulkanSurface(VkSurfaceKHR* pVkSurface, VkInstance* pVkInstance);
 void DestroyVulkanDevice(VkDevice* pVkDevice);
+void DestroyRenderPass(VkDevice* pVkDevice, VkRenderPass* pVkRenderPass);
+void DestroyPipelineLayout(VkDevice* pVkDevice, VkPipelineLayout* pVkPipelineLayout);
+void DestroyPipeline(VkDevice* pVkDevice, VkPipeline* pVkPipeline);
 
 void DestroyAndFreeShaderModule(VkDevice* pVkDevice, VkShaderModule* pVkShaderModule, byte* pShaderBytes);
 
