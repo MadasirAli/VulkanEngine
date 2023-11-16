@@ -26,6 +26,8 @@ int main()
 	VkPipelineLayout pipelineLayout = NULL;
 	VkPipeline pipeLine = NULL;
 
+	VkFramebuffer* pFramebufferList = NULL;
+
 	CreateVulkanInstance(&vulkanInstance);
 
 	hWnd = CreateWindowInstance(L"Test Window", WindowProc);
@@ -71,11 +73,14 @@ int main()
 	CreatePipelineLayout(&logicalDevice, &pipelineLayout);
 	CreatePipeline(&logicalDevice, &pipelineLayout, &renderPass, &swapChainExtend2D, &pipeLine);
 
+	pFramebufferList = CreateFramebuffers(&logicalDevice, &renderPass, &swapChainExtend2D, pSwapChainImageViewsList, numberOfSwapchainImages);
+
 	MSG	msg = {0};
 	while (GetAndDispatchWindowMessage(hWnd, &msg) == true);
 
 	exitCode = (uint32_t) msg.wParam;
 
+	DestroyAndFreeFramebuffers(&logicalDevice, pFramebufferList, numberOfSwapchainImages);
 	DestroyPipeline(&logicalDevice, &pipeLine);
 	DestroyRenderPass(&logicalDevice, &renderPass);
 	DestroyPipelineLayout(&logicalDevice, &pipelineLayout);

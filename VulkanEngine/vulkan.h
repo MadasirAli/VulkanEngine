@@ -44,6 +44,7 @@ VkShaderModule CreateShaderModule(VkDevice* pVkDevice, char* shaderName, byte** 
 void CreateRenderPass(VkDevice* pVkDevice, VkFormat* pVkSwapchainImageFormat, VkRenderPass* pVkRenderPass);
 void CreatePipelineLayout(VkDevice* pVkDevice, VkPipelineLayout* pVkPipelineLayout);
 void CreatePipeline(VkDevice* pVkDevice, VkPipelineLayout* pVkPipelineLayout, VkRenderPass* pVkRenderPass, VkExtent2D* pVkSwapchainExtent2D, VkPipeline* pVkPipeline);
+VkFramebuffer* CreateFramebuffers(VkDevice* pVkDevice, VkRenderPass* pVkRenderPass, VkExtent2D* pVkSwapchainExtend2D, VkImageView* pVkImagesViews, uint32_t numberOfImageViews);
 
 void GetPhysicalDevice(VkInstance* pVulkanInstance, VkPhysicalDevice* pVkPhysicalDevice);
 VkPhysicalDeviceFeatures GetPhysicalDeviceFeatures(VkPhysicalDevice* pVkPhysicalDevice);
@@ -66,6 +67,6 @@ void DestroyPipelineLayout(VkDevice* pVkDevice, VkPipelineLayout* pVkPipelineLay
 void DestroyPipeline(VkDevice* pVkDevice, VkPipeline* pVkPipeline);
 
 void DestroyAndFreeShaderModule(VkDevice* pVkDevice, VkShaderModule* pVkShaderModule, byte* pShaderBytes);
-
 void FreeSwapChainImages(VkImage* pVkImageList);
 void DestroyAndFreeSwapchainImageViews(VkDevice* pVkDevice, VkImageView* pVkImageViewList, uint32_t numberOfImageViews);
+void DestroyAndFreeFramebuffers(VkDevice* pVkDevice, VkFramebuffer* pVkFramebufferList, uint32_t numberOfBuffers);

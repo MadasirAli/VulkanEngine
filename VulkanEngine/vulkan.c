@@ -1,9 +1,48 @@
 #include "vulkan.h"
 
-void DestroyRenderPass(VkDevice* pVkDevice, VkRenderPass* pVkRenderPass)
+void DestroyAndFreeFramebuffers(VkDevice* pVkDevice, VkFramebuffer* pVkFramebufferList, uint32_t numberOfBuffers)
 {
-	log("Destroyed Render Pass.");
-	vkDestroyRenderPass(*pVkDevice, *pVkRenderPass, NULL);
+	log("Destroyed Frame Buffers.");
+	for (uint32_t i = 0; i < numberOfBuffers; i++)
+	{
+		vkDestroyFramebuffer(*pVkDevice, pVkFramebufferList[i], NULL);
+	}
+
+	free(pVkFramebufferList);
+}
+
+VkFramebuffer* CreateFramebuffers(VkDevice* pVkDevice, VkRenderPass* pVkRenderPass, VkExtent2D* pVkSwapchainExtend2D, VkImageView* pVkImagesViews, uint32_t numberOfImageViews)
+{
+	VkFramebuffer* pVkFramebufferList = calloc(numberOfImageViews, sizeof(VkFramebuffer));
+
+	if (pVkFramebufferList == NULL)
+	{
+		error("Failed to allocate memory for vkFramebufferList.");
+		return NULL;
+	}
+
+	VkResult result = { 0 };
+	for (uint32_t i = 0; i < numberOfImageViews; i++)
+	{
+		VkFramebufferCreateInfo vkFramebufferCreateInfo = { 0 };
+		vkFramebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		vkFramebufferCreateInfo.attachmentCount = 1;
+		vkFramebufferCreateInfo.pAttachments = &pVkImagesViews[i];
+		vkFramebufferCreateInfo.renderPass = *pVkRenderPass;
+		vkFramebufferCreateInfo.layers = 1;
+		vkFramebufferCreateInfo.width = pVkSwapchainExtend2D->width;
+		vkFramebufferCreateInfo.height = pVkSwapchainExtend2D->height;
+
+		result = vkCreateFramebuffer(*pVkDevice, &vkFramebufferCreateInfo, NULL, &pVkFramebufferList[i]);
+		if (result != VK_SUCCESS)
+		{
+			error("Failed to Create Frame Buffer.");
+			return NULL;
+		}
+	}
+
+	log("Frame Buffers Created.");
+	return pVkFramebufferList;
 }
 
 void CreateRenderPass(VkDevice* pVkDevice, VkFormat* pVkSwapchainImageFormat, VkRenderPass* pVkRenderPass)
@@ -850,6 +889,12 @@ optional GetPhysicalDeviceGraphicsQueueFamily(VkPhysicalDevice* pVkPhysicalDevic
 	free(pQueueFamiliesList);
 
 	return result;
+}
+
+void DestroyRenderPass(VkDevice* pVkDevice, VkRenderPass* pVkRenderPass)
+{
+	log("Destroyed Render Pass.");
+	vkDestroyRenderPass(*pVkDevice, *pVkRenderPass, NULL);
 }
 
 void DestroyPipelineLayout(VkDevice* pVkDevice, VkPipelineLayout* pVkPipelineLayout)
