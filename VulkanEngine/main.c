@@ -28,6 +28,8 @@ int main()
 
 	VkFramebuffer* pFramebufferList = NULL;
 
+	VkCommandPool commandPool = NULL;
+
 	CreateVulkanInstance(&vulkanInstance);
 
 	hWnd = CreateWindowInstance(L"Test Window", WindowProc);
@@ -75,11 +77,14 @@ int main()
 
 	pFramebufferList = CreateFramebuffers(&logicalDevice, &renderPass, &swapChainExtend2D, pSwapChainImageViewsList, numberOfSwapchainImages);
 
+	CreateCommandPool(&logicalDevice, &commandPool, graphicsQueueFamilyIndex.value);
+
 	MSG	msg = {0};
 	while (GetAndDispatchWindowMessage(hWnd, &msg) == true);
 
 	exitCode = (uint32_t) msg.wParam;
 
+	DestroyCommandPool(&logicalDevice, &commandPool);
 	DestroyAndFreeFramebuffers(&logicalDevice, pFramebufferList, numberOfSwapchainImages);
 	DestroyPipeline(&logicalDevice, &pipeLine);
 	DestroyRenderPass(&logicalDevice, &renderPass);

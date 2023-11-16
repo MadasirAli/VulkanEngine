@@ -45,6 +45,7 @@ void CreateRenderPass(VkDevice* pVkDevice, VkFormat* pVkSwapchainImageFormat, Vk
 void CreatePipelineLayout(VkDevice* pVkDevice, VkPipelineLayout* pVkPipelineLayout);
 void CreatePipeline(VkDevice* pVkDevice, VkPipelineLayout* pVkPipelineLayout, VkRenderPass* pVkRenderPass, VkExtent2D* pVkSwapchainExtent2D, VkPipeline* pVkPipeline);
 VkFramebuffer* CreateFramebuffers(VkDevice* pVkDevice, VkRenderPass* pVkRenderPass, VkExtent2D* pVkSwapchainExtend2D, VkImageView* pVkImagesViews, uint32_t numberOfImageViews);
+void CreateCommandPool(VkDevice* pVkDevice, VkCommandPool* pVkCommandPool, uint32_t queueFamily);
 
 void GetPhysicalDevice(VkInstance* pVulkanInstance, VkPhysicalDevice* pVkPhysicalDevice);
 VkPhysicalDeviceFeatures GetPhysicalDeviceFeatures(VkPhysicalDevice* pVkPhysicalDevice);
@@ -65,6 +66,7 @@ void DestroyVulkanDevice(VkDevice* pVkDevice);
 void DestroyRenderPass(VkDevice* pVkDevice, VkRenderPass* pVkRenderPass);
 void DestroyPipelineLayout(VkDevice* pVkDevice, VkPipelineLayout* pVkPipelineLayout);
 void DestroyPipeline(VkDevice* pVkDevice, VkPipeline* pVkPipeline);
+void DestroyCommandPool(VkDevice* pVkDevice, VkCommandPool* pVkCommandPool);
 
 void DestroyAndFreeShaderModule(VkDevice* pVkDevice, VkShaderModule* pVkShaderModule, byte* pShaderBytes);
 void FreeSwapChainImages(VkImage* pVkImageList);

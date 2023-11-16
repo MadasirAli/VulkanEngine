@@ -1,5 +1,31 @@
 #include "vulkan.h"
 
+void DestroyCommandPool(VkDevice* pVkDevice, VkCommandPool* pVkCommandPool)
+{
+	log("Destroyed Command Pool.");
+	vkDestroyCommandPool(*pVkDevice, *pVkCommandPool, NULL);
+}
+
+void CreateCommandPool(VkDevice* pVkDevice, VkCommandPool* pVkCommandPool, uint32_t queueFamily)
+{
+	VkResult result = { 0 };
+
+	VkCommandPoolCreateInfo vkCommandPoolCreateInfo = { 0 };
+	vkCommandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	vkCommandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	vkCommandPoolCreateInfo.queueFamilyIndex = queueFamily;
+
+	result = vkCreateCommandPool(*pVkDevice, &vkCommandPoolCreateInfo, NULL, pVkCommandPool);
+
+	if (result != VK_SUCCESS)
+	{
+		error("Failed to Create Command Pool.");
+		return;
+	}
+
+	log("Command Pool Created.");
+}
+
 void DestroyAndFreeFramebuffers(VkDevice* pVkDevice, VkFramebuffer* pVkFramebufferList, uint32_t numberOfBuffers)
 {
 	log("Destroyed Frame Buffers.");
