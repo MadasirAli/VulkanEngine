@@ -1,5 +1,24 @@
 #include "vulkan.h"
 
+void CreateCommandBuffer(VkDevice* pVkDevice, VkCommandPool* pVkCommandPool, VkCommandBuffer* pVkCommandBuffer)
+{
+	VkCommandBufferAllocateInfo vkCommandBufferAllocateInfo = { 0 };
+	vkCommandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	vkCommandBufferAllocateInfo.commandPool = *pVkCommandPool;
+	vkCommandBufferAllocateInfo.commandBufferCount = 1;
+	vkCommandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+
+	VkResult result = vkAllocateCommandBuffers(*pVkDevice, &vkCommandBufferAllocateInfo, pVkCommandBuffer);
+
+	if (result != VK_SUCCESS)
+	{
+		error("Failed to Allocate Command Buffer.");
+		return;
+	}
+
+	log("Command Buffer Created.");
+}
+
 void DestroyCommandPool(VkDevice* pVkDevice, VkCommandPool* pVkCommandPool)
 {
 	log("Destroyed Command Pool.");

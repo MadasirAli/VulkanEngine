@@ -29,6 +29,7 @@ int main()
 	VkFramebuffer* pFramebufferList = NULL;
 
 	VkCommandPool commandPool = NULL;
+	VkCommandBuffer commandBuffer = NULL;
 
 	CreateVulkanInstance(&vulkanInstance);
 
@@ -78,6 +79,8 @@ int main()
 	pFramebufferList = CreateFramebuffers(&logicalDevice, &renderPass, &swapChainExtend2D, pSwapChainImageViewsList, numberOfSwapchainImages);
 
 	CreateCommandPool(&logicalDevice, &commandPool, graphicsQueueFamilyIndex.value);
+	CreateCommandBuffer(&logicalDevice, &commandPool, &commandBuffer);
+
 
 	MSG	msg = {0};
 	while (GetAndDispatchWindowMessage(hWnd, &msg) == true);
