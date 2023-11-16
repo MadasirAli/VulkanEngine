@@ -31,6 +31,10 @@ int main()
 	VkCommandPool commandPool = NULL;
 	VkCommandBuffer commandBuffer = NULL;
 
+	VkSemaphore imageAvailableSemaphore = NULL;
+	VkSemaphore imageRenderedSemaphore = NULL;
+	VkFence waitForRenderFence = NULL;
+
 	CreateVulkanInstance(&vulkanInstance);
 
 	hWnd = CreateWindowInstance(L"Test Window", WindowProc);
@@ -81,18 +85,25 @@ int main()
 	CreateCommandPool(&logicalDevice, &commandPool, graphicsQueueFamilyIndex.value);
 	CreateCommandBuffer(&logicalDevice, &commandPool, &commandBuffer);
 
-	RecordDrawCommand(&commandBuffer, &pipeLine, &renderPass, pFramebufferList, &swapChainExtend2D, 0);
+	CreateVulkanSemaphore(&logicalDevice, &imageAvailableSemaphore);
+	CreateVulkanSemaphore(&logicalDevice, &imageRenderedSemaphore);
+	CreateVulkanFence(&logicalDevice, &waitForRenderFence, true);
 
 	MSG	msg = {0};
 	while (GetAndDispatchWindowMessage(hWnd, &msg) == true)
 	{
-
+		DrawFrame(&logicalDevice, &pipeLine, &swapChain, &renderPass, &commandBuffer, pFramebufferList, &graphicsQueue, &presentationQueue, &swapChainExtend2D, &waitForRenderFence, &imageAvailableSemaphore, &imageRenderedSemaphore);
 
 		continue;
 	}
 
+	vkDeviceWaitIdle(logicalDevice);
+
 	exitCode = (uint32_t) msg.wParam;
 
+	DestroyVulkanFence(&logicalDevice, &waitForRenderFence);
+	DestroyVulkanSemaphore(&logicalDevice, &imageRenderedSemaphore);
+	DestroyVulkanSemaphore(&logicalDevice, &imageAvailableSemaphore);
 	DestroyCommandPool(&logicalDevice, &commandPool);
 	DestroyAndFreeFramebuffers(&logicalDevice, pFramebufferList, numberOfSwapchainImages);
 	DestroyPipeline(&logicalDevice, &pipeLine);

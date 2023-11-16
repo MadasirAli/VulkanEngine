@@ -1,6 +1,102 @@
 #include "vulkan.h"
 
-void RecordDrawCommand(VkCommandBuffer* pVkCommandBuffer, VkPipeline* pVkPipeline , VkRenderPass* pVkRenderPass, VkFramebuffer* pVkFrameBufferList, VkExtent2D* pVkSwapchainExtent2D, uint32_t indexOfSwapchainImage)
+void DrawFrame(VkDevice* pVkDevice, VkPipeline* pVkPipeline,VkSwapchainKHR* pVkSwapchainKHR, VkRenderPass* pVkRenderPass, VkCommandBuffer* pVkCommandBuffer, VkFramebuffer* pVkFramebufferList, VkQueue* pVkGraphicsQueue, VkQueue* pVkPresentationQueue, VkExtent2D* pVkSwapchainExtent2D, VkFence* pVkWaitForRenderFence, VkSemaphore* pVkImageAvailableSemaphore, VkSemaphore* pVkImageRenderedSemahore)
+{
+	vkWaitForFences(*pVkDevice, 1, pVkWaitForRenderFence, VK_TRUE, UINT64_MAX);
+	vkResetFences(*pVkDevice, 1, pVkWaitForRenderFence);
+
+	uint32_t imageIndex = 0;
+	vkAcquireNextImageKHR(*pVkDevice, *pVkSwapchainKHR, UINT64_MAX, *pVkImageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+
+	ResetCommandBuffer(pVkCommandBuffer);
+	RecordDrawCommand(pVkCommandBuffer, pVkPipeline, pVkRenderPass, pVkFramebufferList, pVkSwapchainExtent2D, &imageIndex);
+
+	SubmitGraphicsCommandBuffer(pVkCommandBuffer, pVkGraphicsQueue, pVkImageAvailableSemaphore, pVkImageRenderedSemahore, pVkWaitForRenderFence);
+	SubmitPresentationQueue(pVkSwapchainKHR, pVkPresentationQueue, &imageIndex, pVkImageRenderedSemahore);
+}
+
+void SubmitPresentationQueue(VkSwapchainKHR* pVkSwapchainKHR, VkQueue* pVkPresentationQueue, uint32_t* pImageIndex, VkSemaphore* pVkImageRenderedSemaphore)
+{
+	VkPresentInfoKHR vkPresentInfoKHR = { 0 };
+	vkPresentInfoKHR.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	vkPresentInfoKHR.waitSemaphoreCount = 1;
+	vkPresentInfoKHR.pWaitSemaphores = pVkImageRenderedSemaphore;
+	vkPresentInfoKHR.swapchainCount = 1;
+	vkPresentInfoKHR.pSwapchains = pVkSwapchainKHR;
+	vkPresentInfoKHR.pImageIndices = pImageIndex;
+	vkPresentInfoKHR.pResults = NULL;
+
+	vkQueuePresentKHR(*pVkPresentationQueue, &vkPresentInfoKHR);
+}
+
+void SubmitGraphicsCommandBuffer(VkCommandBuffer* pVkCommandBuffer, VkQueue* pVkGraphicsQueue,VkSemaphore* pVkWaitSemaphore, VkSemaphore* pVkRenderFinishSemaphore, VkFence* pVkWaitForRenderFence)
+{
+	VkSubmitInfo vkSubmitInfo = { 0 };
+	vkSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+	VkPipelineStageFlags vkPipelineWaitStageFlags[1] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+	vkSubmitInfo.waitSemaphoreCount = 1;
+	vkSubmitInfo.pWaitSemaphores = pVkWaitSemaphore;
+	vkSubmitInfo.pWaitDstStageMask = vkPipelineWaitStageFlags;
+	vkSubmitInfo.commandBufferCount = 1;
+	vkSubmitInfo.pCommandBuffers = pVkCommandBuffer;
+
+	vkSubmitInfo.signalSemaphoreCount = 1;
+	vkSubmitInfo.pSignalSemaphores = pVkRenderFinishSemaphore;
+
+	VkResult result = vkQueueSubmit(*pVkGraphicsQueue, 1, &vkSubmitInfo, *pVkWaitForRenderFence);
+	if (result != VK_SUCCESS)
+	{
+		error("Failed to Submit Command Buffer.");
+		return;
+	}
+}
+
+void ResetCommandBuffer(VkCommandBuffer* pVkCommandBuffer)
+{
+	vkResetCommandBuffer(*pVkCommandBuffer, 0);
+}
+
+void DestroyVulkanFence(VkDevice* pVkDevice, VkFence* pVkFence)
+{
+	vkDestroyFence(*pVkDevice, *pVkFence, NULL);
+}
+
+void DestroyVulkanSemaphore(VkDevice* pVkDevice, VkSemaphore* pVkSemaphore)
+{
+	vkDestroySemaphore(*pVkDevice, *pVkSemaphore, NULL);
+}
+
+void CreateVulkanFence(VkDevice* pVkDevice, VkFence* pVkFence, bool signled)
+{
+	VkFenceCreateInfo vkFenceCreateInfo = { 0 };
+	vkFenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+
+	if (signled == true)
+		vkFenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+	VkResult result = vkCreateFence(*pVkDevice, &vkFenceCreateInfo, NULL, pVkFence);
+
+	if (result != VK_SUCCESS)
+	{
+		error("Failed to Create Vulkan Fence.");
+		return;
+	}
+}
+
+void CreateVulkanSemaphore(VkDevice* pVkDevice, VkSemaphore* pVkSemaphore)
+{
+	VkSemaphoreCreateInfo vkSemaphoreCreateInfo = { 0 };
+	vkSemaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+	VkResult result = vkCreateSemaphore(*pVkDevice, &vkSemaphoreCreateInfo, NULL, pVkSemaphore);
+	if (result != VK_SUCCESS)
+	{
+		error("Failed to Create Vulkan Semaphore.");
+		return;
+	}
+}
+void RecordDrawCommand(VkCommandBuffer* pVkCommandBuffer, VkPipeline* pVkPipeline , VkRenderPass* pVkRenderPass, VkFramebuffer* pVkFrameBufferList, VkExtent2D* pVkSwapchainExtent2D, uint32_t* pIndexOfSwapchainImage)
 {
 	VkCommandBufferBeginInfo vkCommandBufferBeginInfo = { 0 };
 	vkCommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -18,7 +114,7 @@ void RecordDrawCommand(VkCommandBuffer* pVkCommandBuffer, VkPipeline* pVkPipelin
 	VkRenderPassBeginInfo vkRenderPassBeginInfo = { 0 };
 	vkRenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	vkRenderPassBeginInfo.renderPass = *pVkRenderPass;
-	vkRenderPassBeginInfo.framebuffer = pVkFrameBufferList[indexOfSwapchainImage];
+	vkRenderPassBeginInfo.framebuffer = pVkFrameBufferList[*pIndexOfSwapchainImage];
 
 	VkRect2D vkRenderArea2D = {0};
 
@@ -50,8 +146,8 @@ void RecordDrawCommand(VkCommandBuffer* pVkCommandBuffer, VkPipeline* pVkPipelin
 	VkViewport vkViewport = { 0 };
 	vkViewport.x = 0.0f;
 	vkViewport.y = 0.0f;
-	vkViewport.width = pVkSwapchainExtent2D->width;
-	vkViewport.height = pVkSwapchainExtent2D->height;
+	vkViewport.width = (float) pVkSwapchainExtent2D->width;
+	vkViewport.height = (float) pVkSwapchainExtent2D->height;
 	vkViewport.maxDepth = 1.0f;
 	vkViewport.minDepth = 0.0f;
 
@@ -190,12 +286,22 @@ void CreateRenderPass(VkDevice* pVkDevice, VkFormat* pVkSwapchainImageFormat, Vk
 	vkColorSubpassDescription.colorAttachmentCount = 1;
 	vkColorSubpassDescription.pColorAttachments = &vkColorAttachmentReference;
 
+	VkSubpassDependency vkSubpassDependency = { 0 };
+	vkSubpassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	vkSubpassDependency.dstSubpass = 0;
+	vkSubpassDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	vkSubpassDependency.srcAccessMask = 0;
+	vkSubpassDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	vkSubpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
 	VkRenderPassCreateInfo vkRenderPassCreateInfo = { 0 };
 	vkRenderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 	vkRenderPassCreateInfo.attachmentCount = 1;
 	vkRenderPassCreateInfo.pAttachments = &vkColorAttachmentDescription;
 	vkRenderPassCreateInfo.subpassCount = 1;
 	vkRenderPassCreateInfo.pSubpasses = &vkColorSubpassDescription;
+	vkRenderPassCreateInfo.dependencyCount = 1;
+	vkRenderPassCreateInfo.pDependencies = &vkSubpassDependency;
 
 	VkResult result = vkCreateRenderPass(*pVkDevice, &vkRenderPassCreateInfo, NULL, pVkRenderPass);
 
@@ -377,7 +483,9 @@ void CreatePipeline(VkDevice* pVkDevice, VkPipelineLayout* pVkPipelineLayout, Vk
 	vkGraphicsPipelineCreateInfo.pMultisampleState = &vkPipelineMultisamplesStateCreateInfo;
 	vkGraphicsPipelineCreateInfo.pDepthStencilState = NULL;
 	vkGraphicsPipelineCreateInfo.pColorBlendState = &vkPipelineColorBlendStateCreateInfo;
+#ifdef DYNAMIC_VIEW_PORT
 	vkGraphicsPipelineCreateInfo.pDynamicState = &vkPipelineDynamicStateCreateInfo;
+#endif
 	vkGraphicsPipelineCreateInfo.layout = *pVkPipelineLayout;
 	vkGraphicsPipelineCreateInfo.renderPass = *pVkRenderPass;
 	vkGraphicsPipelineCreateInfo.subpass = 0;
