@@ -7,10 +7,10 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 #include<vulkan\vulkan.h>
 
-//#define DYNAMIC_VIEW_PORT
+#define DYNAMIC_VIEW_PORT
 
-//#define COLOR_BLENDING
-//#define ALPHA_BLENDING
+#define COLOR_BLENDING
+#define ALPHA_BLENDING
 
 #define ENABLE_EXTENSIONS
 #define ENABLE_DEVICE_EXTENSIONS
@@ -35,12 +35,15 @@
 #define VERTEX_SHADER_ENTRY_POINT DEFAULT_SHADER_ENTRY_POINT
 #define FRAGMENT_SHADER_ENTRY_POINT DEFAULT_SHADER_ENTRY_POINT
 
+void Draw();
+void InitializeVulkan(HWND hWnd, char* pApplicationName);
+
 void DrawFrame(VkDevice* pVkDevice, VkPipeline* pVkPipeline, VkSwapchainKHR* pVkSwapchainKHR, VkRenderPass* pVkRenderPass, VkCommandBuffer* pVkCommandBuffer, VkFramebuffer* pVkFramebufferList, VkQueue* pVkGraphicsQueue, VkQueue* pVkPresentationQueue, VkExtent2D* pVkSwapchainExtent2D, VkFence* pVkWaitForRenderFence, VkSemaphore* pVkImageAvailableSemaphore, VkSemaphore* pVkImageRenderedSemahore);
 void SubmitGraphicsCommandBuffer(VkCommandBuffer* pVkCommandBuffer, VkQueue* pVkGraphicsQueue, VkSemaphore* pVkWaitSemaphore, VkSemaphore* pVkRenderFinishSemaphore, VkFence* pVkWaitForRenderFence);
 void SubmitPresentationQueue(VkSwapchainKHR* pVkSwapchainKHR, VkQueue* pVkPresentationQueue, uint32_t* pImageIndex, VkSemaphore* pVkImageRenderedSemaphore);
 void RecordDrawCommand(VkCommandBuffer* pVkCommandBuffer, VkPipeline* pVkPipeline, VkRenderPass* pVkRenderPass, VkFramebuffer* pVkFrameBufferList, VkExtent2D* pVkSwapchainExtent2D, uint32_t* pIndexOfSwapchainImage);
 
-void CreateVulkanInstance(VkInstance* pVulkanInstance);
+void CreateVulkanInstance(VkInstance* pVulkanInstance, char* pApplicationName);
 void CreateLogicalDevice(VkPhysicalDevice* pVkPhysicalDevice, VkPhysicalDeviceFeatures* pVkPhysicalDeviceFeatures, uint32_t graphicsQueueFamilyIndex, uint32_t presentationQueueFamilyIndex, VkDevice* pVkDevice);
 void CreateVulkanSurface(HWND hWnd, VkSurfaceKHR* pVkSurface, VkInstance* pVkInstance);
 void CreateSwapchain(VkPhysicalDevice* pVkPhysicalDevice, VkDevice* pVkDevice, VkSurfaceKHR* pVkSurfaceKHR, VkSwapchainKHR* pVkSwapChainKHR, VkFormat* pVkFormat, VkExtent2D* pVkExtend2D);
@@ -87,3 +90,5 @@ void DestroyAndFreeShaderModule(VkDevice* pVkDevice, VkShaderModule* pVkShaderMo
 void FreeSwapChainImages(VkImage* pVkImageList);
 void DestroyAndFreeSwapchainImageViews(VkDevice* pVkDevice, VkImageView* pVkImageViewList, uint32_t numberOfImageViews);
 void DestroyAndFreeFramebuffers(VkDevice* pVkDevice, VkFramebuffer* pVkFramebufferList, uint32_t numberOfBuffers);
+
+void DestroyVulkan(HWND hWnd);
