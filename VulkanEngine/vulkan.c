@@ -1,77 +1,77 @@
 #include "vulkan.h"
 
-VkInstance vulkanInstance = NULL;
-VkPhysicalDevice physicalDevice = NULL;
-VkDevice logicalDevice = NULL;
-VkQueue graphicsQueue = NULL;
-VkQueue presentationQueue = NULL;
+VkInstance _vulkanInstance = NULL;
+VkPhysicalDevice _physicalDevice = NULL;
+VkDevice _logicalDevice = NULL;
+VkQueue _graphicsQueue = NULL;
+VkQueue _presentationQueue = NULL;
 
-VkSurfaceKHR vulkanSurface = NULL;
+VkSurfaceKHR _vulkanSurface = NULL;
 
-VkSwapchainKHR swapChain = NULL;
-VkImage* pVkSwapchainImageList = NULL;
-uint32_t numberOfSwapchainImages = 0;
-VkFormat swapChainImageFormat = 0;
-VkExtent2D swapChainExtend2D = { 0 };
+VkSwapchainKHR _swapChain = NULL;
+VkImage* _pVkSwapchainImageList = NULL;
+uint32_t _numberOfSwapchainImages = 0;
+VkFormat _swapChainImageFormat = 0;
+VkExtent2D _swapChainExtend2D = { 0 };
 
-VkImageView* pSwapChainImageViewsList = NULL;
+VkImageView* _pSwapChainImageViewsList = NULL;
 
-VkRenderPass  renderPass = NULL;
-VkPipelineLayout pipelineLayout = NULL;
-VkPipeline pipeLine = NULL;
+VkRenderPass  _renderPass = NULL;
+VkPipelineLayout _pipelineLayout = NULL;
+VkPipeline _pipeLine = NULL;
 
-VkFramebuffer* pFramebufferList = NULL;
+VkFramebuffer* _pFramebufferList = NULL;
 
-VkCommandPool commandPool = NULL;
-VkCommandBuffer commandBuffer = NULL;
+VkCommandPool _commandPool = NULL;
+VkCommandBuffer _commandBuffer = NULL;
 
-VkSemaphore imageAvailableSemaphore = NULL;
-VkSemaphore imageRenderedSemaphore = NULL;
-VkFence waitForRenderFence = NULL;
+VkSemaphore _imageAvailableSemaphore = NULL;
+VkSemaphore _imageRenderedSemaphore = NULL;
+VkFence _waitForRenderFence = NULL;
 
 bool vulkanInitialized = false;
 
-void Draw()
+void VDraw()
 {
-	DrawFrame(&logicalDevice, &pipeLine, &swapChain, &renderPass, &commandBuffer, pFramebufferList, &graphicsQueue, &presentationQueue, &swapChainExtend2D, &waitForRenderFence, &imageAvailableSemaphore, &imageRenderedSemaphore);
+	DrawFrame(&_logicalDevice, &_pipeLine, &_swapChain, &_renderPass, &_commandBuffer, _pFramebufferList, &_graphicsQueue, &_presentationQueue, &_swapChainExtend2D, &_waitForRenderFence, &_imageAvailableSemaphore, &_imageRenderedSemaphore);
 }
 
 void DestroyVulkan(HWND hWnd)
 {
-	vkDeviceWaitIdle(logicalDevice);
+	vkDeviceWaitIdle(_logicalDevice);
 
-	DestroyVulkanFence(&logicalDevice, &waitForRenderFence);
-	DestroyVulkanSemaphore(&logicalDevice, &imageRenderedSemaphore);
-	DestroyVulkanSemaphore(&logicalDevice, &imageAvailableSemaphore);
-	DestroyCommandPool(&logicalDevice, &commandPool);
-	DestroyAndFreeFramebuffers(&logicalDevice, pFramebufferList, numberOfSwapchainImages);
-	DestroyPipeline(&logicalDevice, &pipeLine);
-	DestroyRenderPass(&logicalDevice, &renderPass);
-	DestroyPipelineLayout(&logicalDevice, &pipelineLayout);
-	DestroyAndFreeSwapchainImageViews(&logicalDevice, pSwapChainImageViewsList, numberOfSwapchainImages);
-	FreeSwapChainImages(pVkSwapchainImageList);
-	DestroyVulkanSwapchain(&logicalDevice, &swapChain);
-	DestroyVulkanDevice(&logicalDevice);
-	DestroyVulkanSurface(&vulkanSurface, &vulkanInstance);
+	DestroyVulkanFence(&_logicalDevice, &_waitForRenderFence);
+	DestroyVulkanSemaphore(&_logicalDevice, &_imageRenderedSemaphore);
+	DestroyVulkanSemaphore(&_logicalDevice, &_imageAvailableSemaphore);
+	DestroyCommandPool(&_logicalDevice, &_commandPool);
+	DestroyAndFreeFramebuffers(&_logicalDevice, _pFramebufferList, _numberOfSwapchainImages);
+	DestroyPipeline(&_logicalDevice, &_pipeLine);
+	DestroyRenderPass(&_logicalDevice, &_renderPass);
+	DestroyPipelineLayout(&_logicalDevice, &_pipelineLayout);
+	DestroyAndFreeSwapchainImageViews(&_logicalDevice, _pSwapChainImageViewsList, _numberOfSwapchainImages);
+	FreeSwapChainImages(_pVkSwapchainImageList);
+	DestroyVulkanSwapchain(&_logicalDevice, &_swapChain);
+	DestroyVulkanDevice(&_logicalDevice);
+	DestroyVulkanSurface(&_vulkanSurface, &_vulkanInstance);
 	DestroyWindow(hWnd);
-	DestroyVulkanInstance(&vulkanInstance);
+	DestroyVulkanInstance(&_vulkanInstance);
 }
 
 void InitializeVulkan(HWND hWnd, char* pApplicationName)
 {
-	CreateVulkanInstance(&vulkanInstance, pApplicationName);
-	CreateVulkanSurface(hWnd, &vulkanSurface, &vulkanInstance);
+	CreateVulkanInstance(&_vulkanInstance, pApplicationName);
+	CreateVulkanSurface(hWnd, &_vulkanSurface, &_vulkanInstance);
 
-	GetPhysicalDevice(&vulkanInstance, &physicalDevice);
+	GetPhysicalDevice(&_vulkanInstance, &_physicalDevice);
 
-	if (CheckDeviceExtensionsAvailability(&physicalDevice) == false)
+	if (CheckDeviceExtensionsAvailability(&_physicalDevice) == false)
 	{
 		error("Device Does not support the required Device Extensions.");
 		return;
 	}
 
 	optional graphicsQueueFamilyIndex = { 0 };
-	graphicsQueueFamilyIndex = GetPhysicalDeviceGraphicsQueueFamily(&physicalDevice);
+	graphicsQueueFamilyIndex = GetPhysicalDeviceGraphicsQueueFamily(&_physicalDevice);
 	if (graphicsQueueFamilyIndex.hasValue == false)
 	{
 		error("GRAPHICS_BIT Queue Family not Found on Selected Device.");
@@ -79,7 +79,7 @@ void InitializeVulkan(HWND hWnd, char* pApplicationName)
 	}
 
 	optional presentationQueueFamilyIndex = { 0 };
-	presentationQueueFamilyIndex = GetPhysicalDevicePresentationQueueFamily(&physicalDevice, &vulkanSurface);
+	presentationQueueFamilyIndex = GetPhysicalDevicePresentationQueueFamily(&_physicalDevice, &_vulkanSurface);
 	if (presentationQueueFamilyIndex.hasValue == false)
 	{
 		error("Selected Device Does not Support Presentation Queue Family.");
@@ -87,29 +87,29 @@ void InitializeVulkan(HWND hWnd, char* pApplicationName)
 	}
 
 	VkPhysicalDeviceFeatures physicalDeviceFeatures = { 0 };
-	physicalDeviceFeatures = GetPhysicalDeviceFeatures(&physicalDevice);
+	physicalDeviceFeatures = GetPhysicalDeviceFeatures(&_physicalDevice);
 
-	CreateLogicalDevice(&physicalDevice, &physicalDeviceFeatures, graphicsQueueFamilyIndex.value, presentationQueueFamilyIndex.value, &logicalDevice);
+	CreateLogicalDevice(&_physicalDevice, &physicalDeviceFeatures, graphicsQueueFamilyIndex.value, presentationQueueFamilyIndex.value, &_logicalDevice);
 
-	GetDeviceQueue(&logicalDevice, graphicsQueueFamilyIndex.value, 0, &graphicsQueue);
-	GetDeviceQueue(&logicalDevice, presentationQueueFamilyIndex.value, 0, &presentationQueue);
+	GetDeviceQueue(&_logicalDevice, graphicsQueueFamilyIndex.value, 0, &_graphicsQueue);
+	GetDeviceQueue(&_logicalDevice, presentationQueueFamilyIndex.value, 0, &_presentationQueue);
 
-	CreateSwapchain(&physicalDevice, &logicalDevice, &vulkanSurface, &swapChain, &swapChainImageFormat, &swapChainExtend2D);
-	pVkSwapchainImageList = GetSwapchainImages(&logicalDevice, &swapChain, &numberOfSwapchainImages);
-	pSwapChainImageViewsList = CreateSwapchainImageViews(&logicalDevice, pVkSwapchainImageList, numberOfSwapchainImages, &swapChainImageFormat);
+	CreateSwapchain(&_physicalDevice, &_logicalDevice, &_vulkanSurface, &_swapChain, &_swapChainImageFormat, &_swapChainExtend2D);
+	_pVkSwapchainImageList = GetSwapchainImages(&_logicalDevice, &_swapChain, &_numberOfSwapchainImages);
+	_pSwapChainImageViewsList = CreateSwapchainImageViews(&_logicalDevice, _pVkSwapchainImageList, _numberOfSwapchainImages, &_swapChainImageFormat);
 
-	CreateRenderPass(&logicalDevice, &swapChainImageFormat, &renderPass);
-	CreatePipelineLayout(&logicalDevice, &pipelineLayout);
-	CreatePipeline(&logicalDevice, &pipelineLayout, &renderPass, &swapChainExtend2D, &pipeLine);
+	CreateRenderPass(&_logicalDevice, &_swapChainImageFormat, &_renderPass);
+	CreatePipelineLayout(&_logicalDevice, &_pipelineLayout);
+	CreatePipeline(&_logicalDevice, &_pipelineLayout, &_renderPass, &_swapChainExtend2D, &_pipeLine);
 
-	pFramebufferList = CreateFramebuffers(&logicalDevice, &renderPass, &swapChainExtend2D, pSwapChainImageViewsList, numberOfSwapchainImages);
+	_pFramebufferList = CreateFramebuffers(&_logicalDevice, &_renderPass, &_swapChainExtend2D, _pSwapChainImageViewsList, _numberOfSwapchainImages);
 
-	CreateCommandPool(&logicalDevice, &commandPool, graphicsQueueFamilyIndex.value);
-	CreateCommandBuffer(&logicalDevice, &commandPool, &commandBuffer);
+	CreateCommandPool(&_logicalDevice, &_commandPool, graphicsQueueFamilyIndex.value);
+	CreateCommandBuffer(&_logicalDevice, &_commandPool, &_commandBuffer);
 
-	CreateVulkanSemaphore(&logicalDevice, &imageAvailableSemaphore);
-	CreateVulkanSemaphore(&logicalDevice, &imageRenderedSemaphore);
-	CreateVulkanFence(&logicalDevice, &waitForRenderFence, true);
+	CreateVulkanSemaphore(&_logicalDevice, &_imageAvailableSemaphore);
+	CreateVulkanSemaphore(&_logicalDevice, &_imageRenderedSemaphore);
+	CreateVulkanFence(&_logicalDevice, &_waitForRenderFence, true);
 
 	vulkanInitialized = true;
 }
