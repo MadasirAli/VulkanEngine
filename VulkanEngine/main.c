@@ -13,7 +13,6 @@ int main()
 	while (GetAndDispatchWindowMessage(hWnd, &msg) == true)
 	{
 		Draw();
-		continue;
 	}
 
 	exitCode = (uint32_t) msg.wParam;

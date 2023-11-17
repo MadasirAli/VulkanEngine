@@ -28,6 +28,12 @@
     <Filter Include="Header Files\ctypes">
       <UniqueIdentifier>{6b947f27-a0a8-4123-bd6b-78aa791d844b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\comps\vulkan">
+      <UniqueIdentifier>{aa35a330-988b-4204-a885-2e91f3493203}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\comps\vulkan">
+      <UniqueIdentifier>{67ba9067-8273-4eb5-9a65-86878128d277}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">
@@ -45,9 +51,6 @@
     <ClInclude Include="stdbool.h">
       <Filter>Header Files\ctypes</Filter>
     </ClInclude>
-    <ClInclude Include="vulkan.h">
-      <Filter>Header Files\comps</Filter>
-    </ClInclude>
     <ClInclude Include="window.h">
       <Filter>Header Files\comps</Filter>
     </ClInclude>
@@ -60,6 +63,12 @@
     <ClInclude Include="stdbyte.h">
       <Filter>Header Files\ctypes</Filter>
     </ClInclude>
+    <ClInclude Include="vulkan.h">
+      <Filter>Header Files\comps\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="vulkaninternal.h">
+      <Filter>Header Files\comps\vulkan</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">
@@ -71,11 +80,14 @@
     <ClCompile Include="window.c">
       <Filter>Source Files\comps</Filter>
     </ClCompile>
-    <ClCompile Include="vulkan.c">
-      <Filter>Source Files\comps</Filter>
-    </ClCompile>
     <ClCompile Include="file.c">
       <Filter>Source Files\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="vulkan.c">
+      <Filter>Source Files\comps\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="vulkaninternal.c">
+      <Filter>Source Files\comps\vulkan</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
