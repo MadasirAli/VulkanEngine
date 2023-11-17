@@ -31,7 +31,7 @@ VkFence _waitForRenderFence = NULL;
 
 bool vulkanInitialized = false;
 
-void VDraw()
+void Draw()
 {
 	DrawFrame(&_logicalDevice, &_pipeLine, &_swapChain, &_renderPass, &_commandBuffer, _pFramebufferList, &_graphicsQueue, &_presentationQueue, &_swapChainExtend2D, &_waitForRenderFence, &_imageAvailableSemaphore, &_imageRenderedSemaphore);
 }
