@@ -29,7 +29,18 @@ VkSemaphore _imageAvailableSemaphore = NULL;
 VkSemaphore _imageRenderedSemaphore = NULL;
 VkFence _waitForRenderFence = NULL;
 
+VkBuffer _vertexBuffer = NULL;
+VkDeviceMemory _vertexBufferMemory = NULL;
+VkDeviceSize _vertexBufferMemorySize = 0;
+
 bool _vulkanInitialized = false;
+bool _swapchainRecreationRequired = false;
+
+vertex _triangleVertices[3] = {
+	{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+	{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+	{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+};
 
 void Draw()
 {
@@ -39,28 +50,34 @@ void Draw()
 		return;
 	}
 
-	DrawFrame(&_logicalDevice, &_pipeLine, &_swapChain, &_renderPass, &_commandBuffer, _pFramebufferList, &_graphicsQueue, &_presentationQueue, &_swapChainExtend2D, &_waitForRenderFence, &_imageAvailableSemaphore, &_imageRenderedSemaphore);
+	if (_swapchainRecreationRequired == true)
+	{
+		RecreateSwapchain();
+
+		_swapchainRecreationRequired = false;
+		return;
+	}
+
+	DrawFrame(&_logicalDevice, &_pipeLine, &_swapChain, &_renderPass, &_commandBuffer, _pFramebufferList, &_graphicsQueue, &_presentationQueue, &_swapChainExtend2D, &_waitForRenderFence, &_imageAvailableSemaphore, &_imageRenderedSemaphore, &_swapchainRecreationRequired,
+		&_vertexBuffer);
 }
 
-void DestroyVulkan(HWND hWnd)
+void RecreateSwapchain()
 {
 	vkDeviceWaitIdle(_logicalDevice);
 
-	DestroyVulkanFence(&_logicalDevice, &_waitForRenderFence);
-	DestroyVulkanSemaphore(&_logicalDevice, &_imageRenderedSemaphore);
-	DestroyVulkanSemaphore(&_logicalDevice, &_imageAvailableSemaphore);
-	DestroyCommandPool(&_logicalDevice, &_commandPool);
 	DestroyAndFreeFramebuffers(&_logicalDevice, _pFramebufferList, _numberOfSwapchainImages);
-	DestroyPipeline(&_logicalDevice, &_pipeLine);
-	DestroyRenderPass(&_logicalDevice, &_renderPass);
-	DestroyPipelineLayout(&_logicalDevice, &_pipelineLayout);
+
 	DestroyAndFreeSwapchainImageViews(&_logicalDevice, _pSwapChainImageViewsList, _numberOfSwapchainImages);
 	FreeSwapChainImages(_pVkSwapchainImageList);
 	DestroyVulkanSwapchain(&_logicalDevice, &_swapChain);
-	DestroyVulkanDevice(&_logicalDevice);
-	DestroyVulkanSurface(&_vulkanSurface, &_vulkanInstance);
-	DestroyWindow(hWnd);
-	DestroyVulkanInstance(&_vulkanInstance);
+
+
+	CreateSwapchain(&_physicalDevice, &_logicalDevice, &_vulkanSurface, &_swapChain, &_swapChainImageFormat, &_swapChainExtend2D);
+	_pVkSwapchainImageList = GetSwapchainImages(&_logicalDevice, &_swapChain, &_numberOfSwapchainImages);
+	_pSwapChainImageViewsList = CreateSwapchainImageViews(&_logicalDevice, _pVkSwapchainImageList, _numberOfSwapchainImages, &_swapChainImageFormat);
+
+	_pFramebufferList = CreateFramebuffers(&_logicalDevice, &_renderPass, &_swapChainExtend2D, _pSwapChainImageViewsList, _numberOfSwapchainImages);
 }
 
 void InitializeVulkan(HWND hWnd, char* pApplicationName)
@@ -104,6 +121,18 @@ void InitializeVulkan(HWND hWnd, char* pApplicationName)
 	_pVkSwapchainImageList = GetSwapchainImages(&_logicalDevice, &_swapChain, &_numberOfSwapchainImages);
 	_pSwapChainImageViewsList = CreateSwapchainImageViews(&_logicalDevice, _pVkSwapchainImageList, _numberOfSwapchainImages, &_swapChainImageFormat);
 
+	CreateVertexBuffer(&_physicalDevice, &_logicalDevice, 3, &_vertexBuffer, &_vertexBufferMemory, &_vertexBufferMemorySize);
+
+	// filling vertex buffer
+	void* vertexBufferMemory = MapMemory(&_logicalDevice, &_vertexBufferMemory, _vertexBufferMemorySize);
+	if (memcpy(vertexBufferMemory, _triangleVertices, (size_t)_vertexBufferMemorySize) == NULL)
+	{
+		error("Failed to Fill Vertex Buffer.");
+		return;
+	}
+	UnMapMemory(&_logicalDevice, &_vertexBufferMemory);
+	//
+
 	CreateRenderPass(&_logicalDevice, &_swapChainImageFormat, &_renderPass);
 	CreatePipelineLayout(&_logicalDevice, &_pipelineLayout);
 	CreatePipeline(&_logicalDevice, &_pipelineLayout, &_renderPass, &_swapChainExtend2D, &_pipeLine);
@@ -118,4 +147,26 @@ void InitializeVulkan(HWND hWnd, char* pApplicationName)
 	CreateVulkanFence(&_logicalDevice, &_waitForRenderFence, true);
 
 	_vulkanInitialized = true;
+}
+
+void DestroyVulkan(HWND hWnd)
+{
+	vkDeviceWaitIdle(_logicalDevice);
+
+	DestroyVulkanFence(&_logicalDevice, &_waitForRenderFence);
+	DestroyVulkanSemaphore(&_logicalDevice, &_imageRenderedSemaphore);
+	DestroyVulkanSemaphore(&_logicalDevice, &_imageAvailableSemaphore);
+	DestroyCommandPool(&_logicalDevice, &_commandPool);
+	DestroyAndFreeFramebuffers(&_logicalDevice, _pFramebufferList, _numberOfSwapchainImages);
+	DestroyBuffer(&_logicalDevice, &_vertexBuffer, &_vertexBufferMemory);
+	DestroyPipeline(&_logicalDevice, &_pipeLine);
+	DestroyRenderPass(&_logicalDevice, &_renderPass);
+	DestroyPipelineLayout(&_logicalDevice, &_pipelineLayout);
+	DestroyAndFreeSwapchainImageViews(&_logicalDevice, _pSwapChainImageViewsList, _numberOfSwapchainImages);
+	FreeSwapChainImages(_pVkSwapchainImageList);
+	DestroyVulkanSwapchain(&_logicalDevice, &_swapChain);
+	DestroyVulkanDevice(&_logicalDevice);
+	DestroyVulkanSurface(&_vulkanSurface, &_vulkanInstance);
+	DestroyWindow(hWnd);
+	DestroyVulkanInstance(&_vulkanInstance);
 }

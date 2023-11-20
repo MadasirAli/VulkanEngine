@@ -3,6 +3,7 @@
 #include"ctypes.h"
 #include"logger.h"
 #include"file.h"
+#include"vertex.h"
 
 #define VK_USE_PLATFORM_WIN32_KHR
 #include<vulkan\vulkan.h>
@@ -35,10 +36,10 @@
 #define VERTEX_SHADER_ENTRY_POINT DEFAULT_SHADER_ENTRY_POINT
 #define FRAGMENT_SHADER_ENTRY_POINT DEFAULT_SHADER_ENTRY_POINT
 
-void DrawFrame(VkDevice* pVkDevice, VkPipeline* pVkPipeline, VkSwapchainKHR* pVkSwapchainKHR, VkRenderPass* pVkRenderPass, VkCommandBuffer* pVkCommandBuffer, VkFramebuffer* pVkFramebufferList, VkQueue* pVkGraphicsQueue, VkQueue* pVkPresentationQueue, VkExtent2D* pVkSwapchainExtent2D, VkFence* pVkWaitForRenderFence, VkSemaphore* pVkImageAvailableSemaphore, VkSemaphore* pVkImageRenderedSemahore);
+void DrawFrame(VkDevice* pVkDevice, VkPipeline* pVkPipeline, VkSwapchainKHR* pVkSwapchainKHR, VkRenderPass* pVkRenderPass, VkCommandBuffer* pVkCommandBuffer, VkFramebuffer* pVkFramebufferList, VkQueue* pVkGraphicsQueue, VkQueue* pVkPresentationQueue, VkExtent2D* pVkSwapchainExtent2D, VkFence* pVkWaitForRenderFence, VkSemaphore* pVkImageAvailableSemaphore, VkSemaphore* pVkImageRenderedSemahore, bool* pSwapChainRecreation, VkBuffer* pVkVertexBuffer);
 void SubmitGraphicsCommandBuffer(VkCommandBuffer* pVkCommandBuffer, VkQueue* pVkGraphicsQueue, VkSemaphore* pVkWaitSemaphore, VkSemaphore* pVkRenderFinishSemaphore, VkFence* pVkWaitForRenderFence);
 void SubmitPresentationQueue(VkSwapchainKHR* pVkSwapchainKHR, VkQueue* pVkPresentationQueue, uint32_t* pImageIndex, VkSemaphore* pVkImageRenderedSemaphore);
-void RecordDrawCommand(VkCommandBuffer* pVkCommandBuffer, VkPipeline* pVkPipeline, VkRenderPass* pVkRenderPass, VkFramebuffer* pVkFrameBufferList, VkExtent2D* pVkSwapchainExtent2D, uint32_t* pIndexOfSwapchainImage);
+void RecordDrawCommand(VkCommandBuffer* pVkCommandBuffer, VkPipeline* pVkPipeline, VkRenderPass* pVkRenderPass, VkFramebuffer* pVkFrameBufferList, VkExtent2D* pVkSwapchainExtent2D, uint32_t* pIndexOfSwapchainImage, VkBuffer* pVkVertexBuffer);
 
 void CreateVulkanInstance(VkInstance* pVulkanInstance, char* pApplicationName);
 void CreateLogicalDevice(VkPhysicalDevice* pVkPhysicalDevice, VkPhysicalDeviceFeatures* pVkPhysicalDeviceFeatures, uint32_t graphicsQueueFamilyIndex, uint32_t presentationQueueFamilyIndex, VkDevice* pVkDevice);
@@ -52,10 +53,12 @@ void CreatePipeline(VkDevice* pVkDevice, VkPipelineLayout* pVkPipelineLayout, Vk
 VkFramebuffer* CreateFramebuffers(VkDevice* pVkDevice, VkRenderPass* pVkRenderPass, VkExtent2D* pVkSwapchainExtend2D, VkImageView* pVkImagesViews, uint32_t numberOfImageViews);
 void CreateCommandPool(VkDevice* pVkDevice, VkCommandPool* pVkCommandPool, uint32_t queueFamily);
 void CreateCommandBuffer(VkDevice* pVkDevice, VkCommandPool* pVkCommandPool, VkCommandBuffer* pVkCommandBuffer);
-
+void CreateVertexBuffer(VkPhysicalDevice* pVkPhysicalDevice, VkDevice* pVkDevice, uint32_t numberOfVertices, VkBuffer* pVkVertexBuffer, VkDeviceMemory* pVkVertexBufferDeviceMemory, VkDeviceSize* pVkDeviceSize);
 
 void CreateVulkanFence(VkDevice* pVkDevice, VkFence* pVkFence, bool signled);
 void CreateVulkanSemaphore(VkDevice* pVkDevice, VkSemaphore* pVkSemaphore);
+
+void* MapMemory(VkDevice* pVkDevice, VkDeviceMemory* pVkDeviceMemory, VkDeviceSize vkDeviceSize);
 
 void GetPhysicalDevice(VkInstance* pVulkanInstance, VkPhysicalDevice* pVkPhysicalDevice);
 VkPhysicalDeviceFeatures GetPhysicalDeviceFeatures(VkPhysicalDevice* pVkPhysicalDevice);
@@ -63,6 +66,7 @@ optional GetPhysicalDeviceGraphicsQueueFamily(VkPhysicalDevice* pVkPhysicalDevic
 optional GetPhysicalDevicePresentationQueueFamily(VkPhysicalDevice* pVkPhysicalDevice, VkSurfaceKHR* pVkSurface);
 void GetDeviceQueue(VkDevice* pVkDevice, uint32_t queueFamilyIndex, uint32_t queueIndex, VkQueue* pVkQueue);
 VkImage* GetSwapchainImages(VkDevice* pVkDevice, VkSwapchainKHR* pVkSwapchainKHR, uint32_t* numberOfImages);
+optional GetSuitableMemoryIndex(VkPhysicalDevice* pVkPhysicalDevice, uint32_t memoryTypeFilter, VkMemoryPropertyFlagBits vkMemoryPropertyFlagBits);
 
 bool CheckDeviceExtensionsAvailability(VkPhysicalDevice* pVkPhysicalDevice);
 bool CheckInstanceExtensionsAvailability();
@@ -70,6 +74,8 @@ bool CheckInstanceExtensionsAvailability();
 void ShowPhysicalDeviceDetails(VkPhysicalDevice* pVkPhysicalDevice);
 
 void ResetCommandBuffer(VkCommandBuffer* pVkCommandBuffer);
+
+void UnMapMemory(VkDevice* pVkDevice, VkDeviceMemory* pVkDeviceMemory);
 
 void DestroyVulkanSwapchain(VkDevice* pVkDevice, VkSwapchainKHR* pVkSwapchain);
 void DestroyVulkanInstance(VkInstance* pVulkanInstance);
@@ -79,6 +85,7 @@ void DestroyRenderPass(VkDevice* pVkDevice, VkRenderPass* pVkRenderPass);
 void DestroyPipelineLayout(VkDevice* pVkDevice, VkPipelineLayout* pVkPipelineLayout);
 void DestroyPipeline(VkDevice* pVkDevice, VkPipeline* pVkPipeline);
 void DestroyCommandPool(VkDevice* pVkDevice, VkCommandPool* pVkCommandPool);
+void DestroyBuffer(VkDevice* pVkDevice, VkBuffer* pVkBuffer, VkDeviceMemory* pVkDeviceMemory);
 
 void DestroyVulkanFence(VkDevice* pVkDevice, VkFence* pVkFence);
 void DestroyVulkanSemaphore(VkDevice* pVkDevice, VkSemaphore* pVkSemaphore);

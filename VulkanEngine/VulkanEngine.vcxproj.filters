@@ -34,6 +34,15 @@
     <Filter Include="Header Files\comps\vulkan">
       <UniqueIdentifier>{67ba9067-8273-4eb5-9a65-86878128d277}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\comps\input">
+      <UniqueIdentifier>{67aae564-5f5c-4526-8b04-edfaf1d03e2f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\comps\input">
+      <UniqueIdentifier>{4f39ed90-ad30-4d20-a9ff-11d1fdb976c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\structs">
+      <UniqueIdentifier>{d9a2050c-b0df-4b8d-8c4c-70862b4a32af}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">
@@ -69,6 +78,18 @@
     <ClInclude Include="vulkaninternal.h">
       <Filter>Header Files\comps\vulkan</Filter>
     </ClInclude>
+    <ClInclude Include="input.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vertex.h">
+      <Filter>Header Files\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="vector2.h">
+      <Filter>Header Files\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="vector3.h">
+      <Filter>Header Files\structs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">
@@ -88,6 +109,9 @@
     </ClCompile>
     <ClCompile Include="vulkaninternal.c">
       <Filter>Source Files\comps\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="input.c">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

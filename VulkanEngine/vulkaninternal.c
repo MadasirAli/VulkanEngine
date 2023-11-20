@@ -1,15 +1,126 @@
 #include "vulkaninternal.h"
 
-void DrawFrame(VkDevice* pVkDevice, VkPipeline* pVkPipeline, VkSwapchainKHR* pVkSwapchainKHR, VkRenderPass* pVkRenderPass, VkCommandBuffer* pVkCommandBuffer, VkFramebuffer* pVkFramebufferList, VkQueue* pVkGraphicsQueue, VkQueue* pVkPresentationQueue, VkExtent2D* pVkSwapchainExtent2D, VkFence* pVkWaitForRenderFence, VkSemaphore* pVkImageAvailableSemaphore, VkSemaphore* pVkImageRenderedSemahore)
+void* MapMemory(VkDevice* pVkDevice, VkDeviceMemory* pVkDeviceMemory, VkDeviceSize vkDeviceSize)
+{
+
+	void* result = NULL;
+
+	if (vkMapMemory(*pVkDevice, *pVkDeviceMemory, 0, vkDeviceSize, (VkDeviceSize)0, &result) != VK_SUCCESS)
+	{
+		error("Failed to Map Memory.");
+		return NULL;
+	}
+
+	return result;
+}
+
+void UnMapMemory(VkDevice *pVkDevice, VkDeviceMemory* pVkDeviceMemory)
+{
+	vkUnmapMemory(*pVkDevice, *pVkDeviceMemory);
+}
+
+optional GetSuitableMemoryIndex(VkPhysicalDevice* pVkPhysicalDevice, uint32_t memoryTypeFilter, VkMemoryPropertyFlagBits vkMemoryPropertyFlagBits)
+{
+	optional result = { 0 };
+
+	VkPhysicalDeviceMemoryProperties vkDeviceMemoryProperties = { 0 };
+	vkGetPhysicalDeviceMemoryProperties(*pVkPhysicalDevice, &vkDeviceMemoryProperties);
+
+	for (uint32_t i = 0; i < vkDeviceMemoryProperties.memoryTypeCount; i++)
+	{
+		if ((memoryTypeFilter & (1 << i)) && (vkDeviceMemoryProperties.memoryTypes[i].propertyFlags & vkMemoryPropertyFlagBits) == vkMemoryPropertyFlagBits)
+		{
+			result.value = i;
+			result.hasValue = true;
+
+			break;
+		}
+	}
+	return result;
+}
+
+void DestroyBuffer(VkDevice* pVkDevice, VkBuffer* pVkBuffer, VkDeviceMemory* pVkDeviceMemory)
+{
+	vkDestroyBuffer(*pVkDevice, *pVkBuffer, NULL);
+	vkFreeMemory(*pVkDevice, *pVkDeviceMemory, NULL);
+}
+
+void CreateVertexBuffer(VkPhysicalDevice* pVkPhysicalDevice, VkDevice* pVkDevice, uint32_t numberOfVertices, VkBuffer* pVkVertexBuffer, VkDeviceMemory* pVkVertexBufferDeviceMemory, VkDeviceSize* pVkDeviceSize)
+{
+	VkResult result = { 0 };
+
+	VkBufferCreateInfo vkBufferCreateInfo = { 0 };
+	vkBufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	vkBufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	vkBufferCreateInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+	vkBufferCreateInfo.size = sizeof(vertex) * numberOfVertices;
+
+	result = vkCreateBuffer(*pVkDevice, &vkBufferCreateInfo, NULL, pVkVertexBuffer);
+
+	if (result != VK_SUCCESS)
+	{
+		error("Failed to Create Vertex Buffer.");
+		return;
+	}
+
+	VkMemoryRequirements vkMemoryRequirments = { 0 };
+	vkGetBufferMemoryRequirements(*pVkDevice, *pVkVertexBuffer, &vkMemoryRequirments);
+
+	optional memoryIndex = GetSuitableMemoryIndex(pVkPhysicalDevice, vkMemoryRequirments.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+	if (memoryIndex.hasValue == false)
+	{
+		error("Failed to find suitable memory in selected physical device.");
+		return;
+	}
+
+	VkMemoryAllocateInfo vkMemoryAllocateInfo = { 0 };
+	vkMemoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	vkMemoryAllocateInfo.allocationSize = vkMemoryRequirments.size;
+	vkMemoryAllocateInfo.memoryTypeIndex = memoryIndex.value;
+	
+	result = vkAllocateMemory(*pVkDevice, &vkMemoryAllocateInfo, NULL, pVkVertexBufferDeviceMemory);
+
+	if (result != VK_SUCCESS)
+	{
+		error("Failed to allocate memory for Vertex Buffer.");
+		return;
+	}
+
+	result = vkBindBufferMemory(*pVkDevice, *pVkVertexBuffer, *pVkVertexBufferDeviceMemory, 0);
+
+	if (result != VK_SUCCESS)
+	{
+		error("Failed to bind device memory with vertex byffer.");
+		return;
+	}
+
+	*pVkDeviceSize = vkMemoryRequirments.size;
+}
+
+void DrawFrame(VkDevice* pVkDevice, VkPipeline* pVkPipeline, VkSwapchainKHR* pVkSwapchainKHR, VkRenderPass* pVkRenderPass, VkCommandBuffer* pVkCommandBuffer, VkFramebuffer* pVkFramebufferList, VkQueue* pVkGraphicsQueue, VkQueue* pVkPresentationQueue, VkExtent2D* pVkSwapchainExtent2D, VkFence* pVkWaitForRenderFence, VkSemaphore* pVkImageAvailableSemaphore, VkSemaphore* pVkImageRenderedSemahore, bool* pSwapChainRecreation, VkBuffer* pVkVertexBuffer)
 {
 	vkWaitForFences(*pVkDevice, 1, pVkWaitForRenderFence, VK_TRUE, UINT64_MAX);
-	vkResetFences(*pVkDevice, 1, pVkWaitForRenderFence);
+	VkResult result = { 0 };
 
 	uint32_t imageIndex = 0;
-	vkAcquireNextImageKHR(*pVkDevice, *pVkSwapchainKHR, UINT64_MAX, *pVkImageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+	result = vkAcquireNextImageKHR(*pVkDevice, *pVkSwapchainKHR, UINT64_MAX, *pVkImageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+
+	if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR)
+	{
+		*pSwapChainRecreation = true;
+		return;
+	}
+	else if(result != VK_SUCCESS)
+	{
+		error("Failed to Acquire Image from Swapchain.");
+		return;
+	}
+
+	vkResetFences(*pVkDevice, 1, pVkWaitForRenderFence);
 
 	ResetCommandBuffer(pVkCommandBuffer);
-	RecordDrawCommand(pVkCommandBuffer, pVkPipeline, pVkRenderPass, pVkFramebufferList, pVkSwapchainExtent2D, &imageIndex);
+	RecordDrawCommand(pVkCommandBuffer, pVkPipeline, pVkRenderPass, pVkFramebufferList, pVkSwapchainExtent2D, &imageIndex, pVkVertexBuffer);
 
 	SubmitGraphicsCommandBuffer(pVkCommandBuffer, pVkGraphicsQueue, pVkImageAvailableSemaphore, pVkImageRenderedSemahore, pVkWaitForRenderFence);
 	SubmitPresentationQueue(pVkSwapchainKHR, pVkPresentationQueue, &imageIndex, pVkImageRenderedSemahore);
@@ -96,7 +207,7 @@ void CreateVulkanSemaphore(VkDevice* pVkDevice, VkSemaphore* pVkSemaphore)
 		return;
 	}
 }
-void RecordDrawCommand(VkCommandBuffer* pVkCommandBuffer, VkPipeline* pVkPipeline, VkRenderPass* pVkRenderPass, VkFramebuffer* pVkFrameBufferList, VkExtent2D* pVkSwapchainExtent2D, uint32_t* pIndexOfSwapchainImage)
+void RecordDrawCommand(VkCommandBuffer* pVkCommandBuffer, VkPipeline* pVkPipeline, VkRenderPass* pVkRenderPass, VkFramebuffer* pVkFrameBufferList, VkExtent2D* pVkSwapchainExtent2D, uint32_t* pIndexOfSwapchainImage, VkBuffer* pVkVertexBuffer)
 {
 	VkCommandBufferBeginInfo vkCommandBufferBeginInfo = { 0 };
 	vkCommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -141,6 +252,9 @@ void RecordDrawCommand(VkCommandBuffer* pVkCommandBuffer, VkPipeline* pVkPipelin
 	vkCmdBeginRenderPass(*pVkCommandBuffer, &vkRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	vkCmdBindPipeline(*pVkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *pVkPipeline);
+
+	VkDeviceSize vkDeviceSizeList[1] = { 0 };
+	vkCmdBindVertexBuffers(*pVkCommandBuffer, 0, 1, pVkVertexBuffer, vkDeviceSizeList);
 
 #ifdef DYNAMIC_VIEW_PORT
 	VkViewport vkViewport = { 0 };
@@ -365,12 +479,28 @@ void CreatePipeline(VkDevice* pVkDevice, VkPipelineLayout* pVkPipelineLayout, Vk
 		vkPipelineFragmentShaderStageCreateInfo
 	};
 
+	VkVertexInputBindingDescription vkVertexInputBindingDescription = { 0 };
+	vkVertexInputBindingDescription.binding = 0;
+	vkVertexInputBindingDescription.stride = sizeof(vertex);
+	vkVertexInputBindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+	VkVertexInputAttributeDescription vkVertexInputAttributeDescriptionList[2] = {0};
+	vkVertexInputAttributeDescriptionList[0].binding = 0;
+	vkVertexInputAttributeDescriptionList[0].location = 0;
+	vkVertexInputAttributeDescriptionList[0].format = VK_FORMAT_R32G32_SFLOAT;
+	vkVertexInputAttributeDescriptionList[0].offset = offsetof(vertex, position);
+
+	vkVertexInputAttributeDescriptionList[1].binding = 0;
+	vkVertexInputAttributeDescriptionList[1].location = 1;
+	vkVertexInputAttributeDescriptionList[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+	vkVertexInputAttributeDescriptionList[1].offset = offsetof(vertex, color);
+
 	VkPipelineVertexInputStateCreateInfo vkPipelineVertexInputStateCreateInfo = { 0 };
 	vkPipelineVertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vkPipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount = 0;
-	vkPipelineVertexInputStateCreateInfo.pVertexBindingDescriptions = NULL;
-	vkPipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = 0;
-	vkPipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = NULL;
+	vkPipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount = 1;
+	vkPipelineVertexInputStateCreateInfo.pVertexBindingDescriptions = &vkVertexInputBindingDescription;
+	vkPipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = 2;
+	vkPipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = vkVertexInputAttributeDescriptionList;
 
 	VkPipelineInputAssemblyStateCreateInfo vkPipelineInputAssemblyStateCreateInfo = { 0 };
 	vkPipelineInputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
