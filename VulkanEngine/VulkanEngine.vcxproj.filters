@@ -90,6 +90,21 @@
     <ClInclude Include="vector3.h">
       <Filter>Header Files\structs</Filter>
     </ClInclude>
+    <ClInclude Include="matrix4x4.h">
+      <Filter>Header Files\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="matrix4x1.h">
+      <Filter>Header Files\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="maths.h">
+      <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="vector4.h">
+      <Filter>Header Files\structs</Filter>
+    </ClInclude>
+    <ClInclude Include="mtypes.h">
+      <Filter>Header Files\structs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">
@@ -112,6 +127,9 @@
     </ClCompile>
     <ClCompile Include="input.c">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="maths.c">
+      <Filter>Source Files\utils</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

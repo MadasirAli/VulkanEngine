@@ -170,12 +170,17 @@
     <ClInclude Include="input.h" />
     <ClInclude Include="logger.h" />
     <ClInclude Include="main.h" />
+    <ClInclude Include="matrix4x1.h" />
+    <ClInclude Include="matrix4x4.h" />
+    <ClInclude Include="mtypes.h" />
     <ClInclude Include="optional.h" />
     <ClInclude Include="stdbool.h" />
     <ClInclude Include="stdbyte.h" />
     <ClInclude Include="stdint.h" />
     <ClInclude Include="vector2.h" />
     <ClInclude Include="vector3.h" />
+    <ClInclude Include="vector4.h" />
+    <ClInclude Include="maths.h" />
     <ClInclude Include="vertex.h" />
     <ClInclude Include="vulkan.h" />
     <ClInclude Include="vulkaninternal.h" />
@@ -186,6 +191,7 @@
     <ClCompile Include="input.c" />
     <ClCompile Include="logger.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="maths.c" />
     <ClCompile Include="vulkan.c" />
     <ClCompile Include="vulkaninternal.c" />
     <ClCompile Include="window.c" />

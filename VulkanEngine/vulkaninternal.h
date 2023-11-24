@@ -3,7 +3,8 @@
 #include"ctypes.h"
 #include"logger.h"
 #include"file.h"
-#include"vertex.h"
+#include"mtypes.h"
+#include"maths.h"
 
 #define VK_USE_PLATFORM_WIN32_KHR
 #include<vulkan\vulkan.h>
